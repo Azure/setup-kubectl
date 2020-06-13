@@ -35,6 +35,7 @@ jobs:
         $middle = $false; 
         $end = $false; 
         $count = 0; 
+
         foreach ($j in $coverage_result) 
         { 
           if ($j.tostring().startswith("--------------")) 
@@ -56,10 +57,11 @@ jobs:
           }
           $count++
         }
+
         $tbl_md = $coverage_result[($start_index+1)..($end_index-1)] -join "\n"
         $summary = $coverage_result[($end_index + 1)..$count] -join "\n"
         $comment = $tbl_md + "\n" + $summary
-        echo "> ${comment}"
+
         $url = "https://api.github.com/repos/${env:GITHUB_REPOSITORY}/issues/${env:PR_NUMBER}/comments"
         $headers = @{
           "Authorization" = "token ${env:GITHUB_TOKEN}"
