@@ -1,0 +1,66 @@
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - 'releases/*'
+
+jobs:
+  build_test_job:
+    name: 'Build and test job'
+    runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+          os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v1
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm build
+    - name: 'Run L0 tests'
+      run: |
+        npm run test
+    - name : 'Run test coverage'
+      if: runner.os == 'Windows'
+      env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        $coverage_result = npm run test-coverage
+        $start = $false;
+        $middle = $false; 
+        $end = $false; 
+        $count = 0; 
+        foreach ($j in $coverage_result) 
+        { 
+          if ($j.tostring().startswith("--------------")) 
+          { 
+                if (!$start) 
+                { 
+                    $start = $true;
+                    $start_index = $count 
+                } 
+                elseif (!$middle) 
+                {
+                    $middle = $true; 
+                } 
+                elseif (!$end) 
+                { 
+                    $end = $true; 
+                    $end_index = $count 
+                } 
+          }
+          $count++
+        }
+        $tbl_md = $coverage_result[($start_index+1)..($end_index-1)] -join "\n"
+        $summary = $coverage_result[($end_index + 1)..$count] -join "\n"
+        $comment = $tbl_md + "\n" + $summary
+        $url = "https://api.github.com/repos/${env:GITHUB_REPOSITORY}/issues/${env:PR_NUMBER}/comments"
+        $headers = @{
+          "Authorization" = "token ${env:GITHUB_TOKEN}"
+        }
+        Invoke-RestMethod -Method POST -Uri $url -Headers $headers -Body "{ `"body`": `"${comment}`" }"

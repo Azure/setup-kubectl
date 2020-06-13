@@ -64,7 +64,7 @@ async function downloadKubectl(version: string): Promise<string> {
     return kubectlPath;
 }
 
-async function run() {
+export async function run() {
     let version = core.getInput('version', { 'required': true });
     if (version.toLocaleLowerCase() === 'latest') {
         version = await getStableKubectlVersion();
