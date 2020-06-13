@@ -38,7 +38,7 @@ jobs:
 
         foreach ($j in $coverage_result) 
         { 
-          if ($j.tostring().startswith("--------------")) 
+          if ($j.tostring().startswith("----------")) 
           { 
                 if (!$start) 
                 { 
@@ -63,7 +63,6 @@ jobs:
         $comment = $tbl_md + "\n" + $summary
         echo ">>: { `"body`": `"${comment}`" }"
         $url = "https://api.github.com/repos/${env:GITHUB_REPOSITORY}/issues/${env:PR_NUMBER}/comments"
-        echo "url>> ${url}"
         $headers = @{
           "Authorization" = "token ${env:GITHUB_TOKEN}"
         }
