@@ -37,7 +37,7 @@ jobs:
         npm run test
         
     - name : 'Run test coverage'
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && (github.event.pull_request.base.ref == 'releases/v1' || github.event.pull_request.base.ref == 'master')
       env:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
