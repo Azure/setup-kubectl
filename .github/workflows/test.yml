@@ -1,81 +1,21 @@
-on:
+name: "build-test"
+on: # rebuild any PRs and main branch changes
   pull_request:
+    branches:
+      - master
+      - 'releases/*'
   push:
     branches:
       - master
       - 'releases/*'
 
 jobs:
-  build_test_job:
-    name: 'Build and test job'
-    runs-on: ${{ matrix.os }}
-    strategy:
-        matrix:
-          os: [windows-latest, ubuntu-latest, macos-latest]
+  build: # make sure build/ci works properly
+    runs-on: ubuntu-latest
     steps:
-
-    - name: 'Checking out repo code'
-      uses: actions/checkout@v1
-
-    - name: Extract branch name
-      id: extract_branch
-      run: |
-        echo "##[set-output name=branchname;]$(echo ${GITHUB_REF##*/})"
-
-    - name: 'Install dependency for master'
-      if: github.event.pull_request.base.ref == 'master' || steps.extract_branch.outputs.branchname == 'master'
+    - uses: actions/checkout@v1
+    - name: build and run tests
       run: |
         npm install
-    
-    - name: 'Install dependency for releases'
-      if: github.event.pull_request.base.ref == 'releases/v1' || steps.extract_branch.outputs.branchname == 'releases/v1'
-      run: |
-        npm install --only=dev
-
-    - name: 'Run L0 tests'
-      run: |
-        npm run test
-        
-    - name : 'Run test coverage'
-      if: runner.os == 'Windows' && (github.event.pull_request.base.ref == 'releases/v1' || github.event.pull_request.base.ref == 'master')
-      env:
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        $coverage_result = npm run test-coverage
-        $start = $false;
-        $middle = $false; 
-        $end = $false; 
-        $count = 0; 
-
-        foreach ($j in $coverage_result) 
-        { 
-          if ($j.tostring().startswith("----------")) 
-          { 
-                if (!$start) 
-                { 
-                    $start = $true;
-                    $start_index = $count 
-                } 
-                elseif (!$middle) 
-                {
-                    $middle = $true; 
-                } 
-                elseif (!$end) 
-                { 
-                    $end = $true; 
-                    $end_index = $count 
-                } 
-          }
-          $count++
-        }
-
-        $tbl_md = $coverage_result[($start_index+1)..($end_index-1)] -join "\n"
-        $summary = $coverage_result[($end_index + 1)..$count] -join "\n"
-        $comment = $tbl_md + "\n" + $summary
-        $url = "https://api.github.com/repos/${env:GITHUB_REPOSITORY}/issues/${env:PR_NUMBER}/comments"
-        $headers = @{
-          "Authorization" = "token ${env:GITHUB_TOKEN}"
-        }
-        $body = "{ `"body`": `"${comment}`" }"
-        Invoke-RestMethod -Method POST -Uri $url -Headers $headers -Body $body
+        npm build
+        npm test
