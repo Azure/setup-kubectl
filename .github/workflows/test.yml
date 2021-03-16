@@ -2,7 +2,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
       - 'releases/*'
 
 jobs:
@@ -22,8 +22,8 @@ jobs:
       run: |
         echo "##[set-output name=branchname;]$(echo ${GITHUB_REF##*/})"
 
-    - name: 'Install dependency for master'
-      if: github.event.pull_request.base.ref == 'master' || steps.extract_branch.outputs.branchname == 'master'
+    - name: 'Install dependency for main'
+      if: github.event.pull_request.base.ref == 'main' || steps.extract_branch.outputs.branchname == 'main'
       run: |
         npm install
     
