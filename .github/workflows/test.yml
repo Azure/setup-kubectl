@@ -17,27 +17,13 @@ jobs:
     - name: 'Checking out repo code'
       uses: actions/checkout@v1
 
-    - name: Extract branch name
-      id: extract_branch
-      run: |
-        echo "##[set-output name=branchname;]$(echo ${GITHUB_REF##*/})"
-
-    - name: 'Install dependency for main'
-      if: github.event.pull_request.base.ref == 'main' || steps.extract_branch.outputs.branchname == 'main'
-      run: |
-        npm install
-    
-    - name: 'Install dependency for releases'
-      if: github.event.pull_request.base.ref == 'releases/v1' || steps.extract_branch.outputs.branchname == 'releases/v1'
-      run: |
-        npm install --only=dev
-
     - name: 'Run L0 tests'
       run: |
+        npm install
         npm run test
         
     - name : 'Run test coverage'
-      if: runner.os == 'Windows' && (github.event.pull_request.base.ref == 'releases/v1' || github.event.pull_request.base.ref == 'master')
+      if: runner.os == 'Windows' && (github.event.pull_request.base.ref == 'releases/v1' || github.event.pull_request.base.ref == 'main')
       env:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
