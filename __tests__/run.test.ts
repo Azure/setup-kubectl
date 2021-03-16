@@ -4,50 +4,74 @@ import * as toolCache from '@actions/tool-cache';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as core from '@actions/core';
+import * as util from 'util';
 
 describe('Testing all functions in run file.', () => {
     test('getExecutableExtension() - return .exe when os is Windows', () => {
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
-    
+
         expect(run.getExecutableExtension()).toBe('.exe');
-        expect(os.type).toBeCalled();         
+        expect(os.type).toBeCalled();
     });
 
     test('getExecutableExtension() - return empty string for non-windows OS', () => {
         jest.spyOn(os, 'type').mockReturnValue('Darwin');
-    
-        expect(run.getExecutableExtension()).toBe('');         
-        expect(os.type).toBeCalled();         
+
+        expect(run.getExecutableExtension()).toBe('');
+        expect(os.type).toBeCalled();
     });
 
-    test('getkubectlDownloadURL() - return the URL to download kubectl for Linux', () => {
+    test.each([
+        ['arm', 'arm'],
+        ['arm64', 'arm64'],
+        ['x64', 'amd64']
+    ])("getKubectlArch() - return on %s os arch %s kubectl arch", (osArch, kubectlArch) => {
+        jest.spyOn(os, 'arch').mockReturnValue(osArch);
+
+        expect(run.getKubectlArch()).toBe(kubectlArch);
+        expect(os.arch).toBeCalled();
+    });
+
+    test.each([
+        ['arm'],
+        ['arm64'],
+        ['amd64']
+    ])('getkubectlDownloadURL() - return the URL to download %s kubectl for Linux', (arch) => {
         jest.spyOn(os, 'type').mockReturnValue('Linux');
-        const kubectlLinuxUrl = 'https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl'
-    
-        expect(run.getkubectlDownloadURL('v1.15.0')).toBe(kubectlLinuxUrl);
-        expect(os.type).toBeCalled();         
+        const kubectlLinuxUrl = util.format('https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/%s/kubectl', arch);
+
+        expect(run.getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlLinuxUrl);
+        expect(os.type).toBeCalled();
     });
 
-    test('getkubectlDownloadURL() - return the URL to download kubectl for Darwin', () => {
+    test.each([
+        ['arm'],
+        ['arm64'],
+        ['amd64']
+    ])('getkubectlDownloadURL() - return the URL to download %s kubectl for Darwin', (arch) => {
         jest.spyOn(os, 'type').mockReturnValue('Darwin');
-        const kubectlDarwinUrl = 'https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/darwin/amd64/kubectl'
-    
-        expect(run.getkubectlDownloadURL('v1.15.0')).toBe(kubectlDarwinUrl);
-        expect(os.type).toBeCalled();         
+        const kubectlDarwinUrl = util.format('https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/darwin/%s/kubectl', arch);
+
+        expect(run.getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlDarwinUrl);
+        expect(os.type).toBeCalled();
     });
 
-    test('getkubectlDownloadURL() - return the URL to download kubectl for Windows', () => {
+    test.each([
+        ['arm'],
+        ['arm64'],
+        ['amd64']
+    ])('getkubectlDownloadURL() - return the URL to download %s kubectl for Windows', (arch) => {
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
-    
-        const kubectlWindowsUrl = 'https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/windows/amd64/kubectl.exe'
-        expect(run.getkubectlDownloadURL('v1.15.0')).toBe(kubectlWindowsUrl);
-        expect(os.type).toBeCalled();         
+
+        const kubectlWindowsUrl = util.format('https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/windows/%s/kubectl.exe', arch);
+        expect(run.getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlWindowsUrl);
+        expect(os.type).toBeCalled();
     });
 
     test('getStableKubectlVersion() - download stable version file, read version and return it', async () => {
         jest.spyOn(toolCache, 'downloadTool').mockReturnValue(Promise.resolve('pathToTool'));
         jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.20.4');
-        
+
         expect(await run.getStableKubectlVersion()).toBe('v1.20.4');
         expect(toolCache.downloadTool).toBeCalled();
         expect(fs.readFileSync).toBeCalledWith('pathToTool', 'utf8');
@@ -56,7 +80,7 @@ describe('Testing all functions in run file.', () => {
     test('getStableKubectlVersion() - return default v1.15.0 if version read is empty', async () => {
         jest.spyOn(toolCache, 'downloadTool').mockReturnValue(Promise.resolve('pathToTool'));
         jest.spyOn(fs, 'readFileSync').mockReturnValue('');
-        
+
         expect(await run.getStableKubectlVersion()).toBe('v1.15.0');
         expect(toolCache.downloadTool).toBeCalled();
         expect(fs.readFileSync).toBeCalledWith('pathToTool', 'utf8');
@@ -64,7 +88,7 @@ describe('Testing all functions in run file.', () => {
 
     test('getStableKubectlVersion() - return default v1.15.0 if unable to download file', async () => {
         jest.spyOn(toolCache, 'downloadTool').mockRejectedValue('Unable to download.');
-        
+
         expect(await run.getStableKubectlVersion()).toBe('v1.15.0');
         expect(toolCache.downloadTool).toBeCalled();
     });
@@ -75,7 +99,7 @@ describe('Testing all functions in run file.', () => {
         jest.spyOn(toolCache, 'cacheFile').mockReturnValue(Promise.resolve('pathToCachedTool'));
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
         jest.spyOn(fs, 'chmodSync').mockImplementation(() => {});
-        
+
         expect(await run.downloadKubectl('v1.15.0')).toBe(path.join('pathToCachedTool', 'kubectl.exe'));
         expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0');
         expect(toolCache.downloadTool).toBeCalled();
@@ -93,12 +117,29 @@ describe('Testing all functions in run file.', () => {
         expect(toolCache.downloadTool).toBeCalled();
     });
 
+    test('downloadKubectl() - throw kubectl not found error when receive 404 response', async () => {
+        const kubectlVersion = 'v1.15.0'
+        const arch = 'arm128';
+
+        jest.spyOn(os, 'arch').mockReturnValue(arch);
+        jest.spyOn(toolCache, 'find').mockReturnValue('');
+        jest.spyOn(toolCache, 'downloadTool').mockImplementation(_ => {
+            throw new toolCache.HTTPError(404);
+        });
+
+        await expect(run.downloadKubectl(kubectlVersion)).rejects
+            .toThrow(util.format("Kubectl '%s' for '%s' arch not found.", kubectlVersion, arch));
+        expect(os.arch).toBeCalled();
+        expect(toolCache.find).toBeCalledWith('kubectl', kubectlVersion);
+        expect(toolCache.downloadTool).toBeCalled();
+    });
+
     test('downloadKubectl() - return path to existing cache of kubectl', async () => {
         jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool');
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
         jest.spyOn(fs, 'chmodSync').mockImplementation(() => {});
         jest.spyOn(toolCache, 'downloadTool');
-        
+
         expect(await run.downloadKubectl('v1.15.0')).toBe(path.join('pathToCachedTool', 'kubectl.exe'));
         expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0');
         expect(os.type).toBeCalled();
