@@ -2,6 +2,7 @@ import * as run from '../src/run'
 import * as os from 'os';
 import * as toolCache from '@actions/tool-cache';
 import * as fs from 'fs';
+import * as path from 'path';
 
 describe('Testing all functions in run file.', () => {
     test('getExecutableExtension() - return .exe when os is Windows', () => {
@@ -74,12 +75,12 @@ describe('Testing all functions in run file.', () => {
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
         jest.spyOn(fs, 'chmodSync').mockImplementation(() => {});
         
-        expect(await run.downloadKubectl('v1.15.0')).toBe('pathToCachedTool/kubectl.exe');
+        expect(await run.downloadKubectl('v1.15.0')).toBe(path.join('pathToCachedTool', 'kubectl.exe'));
         expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0');
         expect(toolCache.downloadTool).toBeCalled();
         expect(toolCache.cacheFile).toBeCalled();
         expect(os.type).toBeCalled();
-        expect(fs.chmodSync).toBeCalledWith('pathToCachedTool/kubectl.exe', '777');
+        expect(fs.chmodSync).toBeCalledWith(path.join('pathToCachedTool', 'kubectl.exe'), '777');
     });
 
     test('downloadKubectl() - throw DownloadKubectlFailed error when unable to download kubectl', async () => {
@@ -95,10 +96,12 @@ describe('Testing all functions in run file.', () => {
         jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool');
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
         jest.spyOn(fs, 'chmodSync').mockImplementation(() => {});
+        jest.spyOn(toolCache, 'downloadTool');
         
-        expect(await run.downloadKubectl('v1.15.0')).toBe('pathToCachedTool/kubectl.exe');
+        expect(await run.downloadKubectl('v1.15.0')).toBe(path.join('pathToCachedTool', 'kubectl.exe'));
         expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0');
         expect(os.type).toBeCalled();
-        expect(fs.chmodSync).toBeCalledWith('pathToCachedTool/kubectl.exe', '777');
+        expect(fs.chmodSync).toBeCalledWith(path.join('pathToCachedTool', 'kubectl.exe'), '777');
+        expect(toolCache.downloadTool).not.toBeCalled();
     });
 });
