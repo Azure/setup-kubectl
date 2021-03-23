@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as toolCache from '@actions/tool-cache';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as core from '@actions/core';
 
 describe('Testing all functions in run file.', () => {
     test('getExecutableExtension() - return .exe when os is Windows', () => {
@@ -103,5 +104,38 @@ describe('Testing all functions in run file.', () => {
         expect(os.type).toBeCalled();
         expect(fs.chmodSync).toBeCalledWith(path.join('pathToCachedTool', 'kubectl.exe'), '777');
         expect(toolCache.downloadTool).not.toBeCalled();
+    });
+
+    test('run() - download specified version and set output', async () => {
+        jest.spyOn(core, 'getInput').mockReturnValue('v1.15.5');
+        jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool');
+        jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
+        jest.spyOn(fs, 'chmodSync').mockImplementation();
+        jest.spyOn(core, 'addPath').mockImplementation();
+        jest.spyOn(console, 'log').mockImplementation();
+        jest.spyOn(core, 'setOutput').mockImplementation();
+
+        expect(await run.run()).toBeUndefined();
+        expect(core.getInput).toBeCalledWith('version', { 'required': true });
+        expect(core.addPath).toBeCalledWith('pathToCachedTool');
+        expect(core.setOutput).toBeCalledWith('kubectl-path', path.join('pathToCachedTool', 'kubectl.exe'));
+    });
+
+    test('run() - get latest version, download it and set output', async () => {
+        jest.spyOn(core, 'getInput').mockReturnValue('latest');
+        jest.spyOn(toolCache, 'downloadTool').mockReturnValue(Promise.resolve('pathToTool'));
+        jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.20.4');
+        jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool');
+        jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
+        jest.spyOn(fs, 'chmodSync').mockImplementation();
+        jest.spyOn(core, 'addPath').mockImplementation();
+        jest.spyOn(console, 'log').mockImplementation();
+        jest.spyOn(core, 'setOutput').mockImplementation();
+
+        expect(await run.run()).toBeUndefined();
+        expect(toolCache.downloadTool).toBeCalledWith('https://storage.googleapis.com/kubernetes-release/release/stable.txt');
+        expect(core.getInput).toBeCalledWith('version', { 'required': true });
+        expect(core.addPath).toBeCalledWith('pathToCachedTool');
+        expect(core.setOutput).toBeCalledWith('kubectl-path', path.join('pathToCachedTool', 'kubectl.exe'));
     });
 });
