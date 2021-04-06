@@ -17,17 +17,25 @@ export function getExecutableExtension(): string {
     return '';
 }
 
-export function getkubectlDownloadURL(version: string): string {
+export function getKubectlArch(): string {
+    let arch = os.arch();
+    if (arch === 'x64') {
+        return 'amd64';
+    }
+    return arch;
+}
+
+export function getkubectlDownloadURL(version: string, arch: string): string {
     switch (os.type()) {
         case 'Linux':
-            return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/linux/amd64/kubectl', version);
+            return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/linux/%s/kubectl', version, arch);
 
         case 'Darwin':
-            return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/darwin/amd64/kubectl', version);
+            return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/darwin/%s/kubectl', version, arch);
 
         case 'Windows_NT':
         default:
-            return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/amd64/kubectl.exe', version);
+            return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/%s/kubectl.exe', version, arch);
 
     }
 }
@@ -49,11 +57,16 @@ export async function getStableKubectlVersion(): Promise<string> {
 export async function downloadKubectl(version: string): Promise<string> {
     let cachedToolpath = toolCache.find(kubectlToolName, version);
     let kubectlDownloadPath = '';
+    let arch = getKubectlArch();
     if (!cachedToolpath) {
         try {
-            kubectlDownloadPath = await toolCache.downloadTool(getkubectlDownloadURL(version));
+            kubectlDownloadPath = await toolCache.downloadTool(getkubectlDownloadURL(version, arch));
         } catch (exception) {
-            throw new Error('DownloadKubectlFailed');
+            if (exception instanceof toolCache.HTTPError && exception.httpStatusCode === 404) {
+                throw new Error(util.format("Kubectl '%s' for '%s' arch not found.", version, arch));
+            } else {
+                throw new Error('DownloadKubectlFailed');
+            }
         }
 
         cachedToolpath = await toolCache.cacheFile(kubectlDownloadPath, kubectlToolName + getExecutableExtension(), kubectlToolName, version);
