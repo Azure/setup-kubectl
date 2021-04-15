@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 
-import * as toolCache from '@actions/tool-cache';
 import * as core from '@actions/core';
 
 const kubectlToolName = 'kubectl';
