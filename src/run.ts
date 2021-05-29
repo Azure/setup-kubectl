@@ -77,17 +77,17 @@ export async function downloadKubectl(version: string): Promise<string> {
     return kubectlPath;
 }
 
-export async function run() {
-    let version = core.getInput('version', { 'required': true });
-    if (version.toLocaleLowerCase() === 'latest') {
-        version = await getStableKubectlVersion();
-    }
-    let cachedPath = await downloadKubectl(version);
+// export async function run() {
+//     let version = core.getInput('version', { 'required': true });
+//     if (version.toLocaleLowerCase() === 'latest') {
+//         version = await getStableKubectlVersion();
+//     }
+//     let cachedPath = await downloadKubectl(version);
 
-    core.addPath(path.dirname(cachedPath));
+//     core.addPath(path.dirname(cachedPath));
             
-    console.log(`Kubectl tool version: '${version}' has been cached at ${cachedPath}`);
-    core.setOutput('kubectl-path', cachedPath);
-}
+//     console.log(`Kubectl tool version: '${version}' has been cached at ${cachedPath}`);
+//     core.setOutput('kubectl-path', cachedPath);
+// }
 
 run().catch(core.setFailed);
