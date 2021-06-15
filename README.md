@@ -9,7 +9,7 @@ Acceptable values are latest or any semantic version string like `v1.15.0`. Use 
     version: '<version>' # default is latest stable
   id: install
 ```
-Refer to the action metadata file for details about all the inputs https://github.com/Azure/setup-kubectl/blob/master/action.yml
+Refer to the action metadata file for details about all the inputs https://github.com/Azure/setup-kubectl/blob/main/action.yml
 
 # Contributing
 
