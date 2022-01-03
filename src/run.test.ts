@@ -1,5 +1,5 @@
 import * as run from './run'
-import * as helpers from './helpers'
+import { getkubectlDownloadURL, getKubectlArch, getExecutableExtension } from './helpers';
 import * as os from 'os';
 import * as toolCache from '@actions/tool-cache';
 import * as fs from 'fs';
@@ -11,14 +11,14 @@ describe('Testing all functions in run file.', () => {
     test('getExecutableExtension() - return .exe when os is Windows', () => {
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
 
-        expect(helpers.getExecutableExtension()).toBe('.exe');
+        expect(getExecutableExtension()).toBe('.exe');
         expect(os.type).toBeCalled();
     });
 
     test('getExecutableExtension() - return empty string for non-windows OS', () => {
         jest.spyOn(os, 'type').mockReturnValue('Darwin');
 
-        expect(helpers.getExecutableExtension()).toBe('');
+        expect(getExecutableExtension()).toBe('');
         expect(os.type).toBeCalled();
     });
 
@@ -29,7 +29,7 @@ describe('Testing all functions in run file.', () => {
     ])("getKubectlArch() - return on %s os arch %s kubectl arch", (osArch, kubectlArch) => {
         jest.spyOn(os, 'arch').mockReturnValue(osArch);
 
-        expect(helpers.getKubectlArch()).toBe(kubectlArch);
+        expect(getKubectlArch()).toBe(kubectlArch);
         expect(os.arch).toBeCalled();
     });
 
@@ -41,7 +41,7 @@ describe('Testing all functions in run file.', () => {
         jest.spyOn(os, 'type').mockReturnValue('Linux');
         const kubectlLinuxUrl = util.format('https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/%s/kubectl', arch);
 
-        expect(helpers.getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlLinuxUrl);
+        expect(getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlLinuxUrl);
         expect(os.type).toBeCalled();
     });
 
@@ -53,7 +53,7 @@ describe('Testing all functions in run file.', () => {
         jest.spyOn(os, 'type').mockReturnValue('Darwin');
         const kubectlDarwinUrl = util.format('https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/darwin/%s/kubectl', arch);
 
-        expect(helpers.getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlDarwinUrl);
+        expect(getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlDarwinUrl);
         expect(os.type).toBeCalled();
     });
 
@@ -65,7 +65,7 @@ describe('Testing all functions in run file.', () => {
         jest.spyOn(os, 'type').mockReturnValue('Windows_NT');
 
         const kubectlWindowsUrl = util.format('https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/windows/%s/kubectl.exe', arch);
-        expect(helpers.getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlWindowsUrl);
+        expect(getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlWindowsUrl);
         expect(os.type).toBeCalled();
     });
 

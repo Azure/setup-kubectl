@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as toolCache from '@actions/tool-cache';
 import * as core from '@actions/core';
 
-import * as helpers from './helpers';
+import { getkubectlDownloadURL, getKubectlArch, getExecutableExtension } from './helpers';
 
 const kubectlToolName = 'kubectl';
 const stableKubectlVersion = 'v1.15.0';
@@ -20,7 +20,7 @@ export async function run() {
 
     core.addPath(path.dirname(cachedPath));
 
-    console.log(`Kubectl tool version: '${version}' has been cached at ${cachedPath}`);
+    core.debug(`Kubectl tool version: '${version}' has been cached at ${cachedPath}`);
     core.setOutput('kubectl-path', cachedPath);
 }
 
@@ -41,10 +41,10 @@ export async function getStableKubectlVersion(): Promise<string> {
 export async function downloadKubectl(version: string): Promise<string> {
     let cachedToolpath = toolCache.find(kubectlToolName, version);
     let kubectlDownloadPath = '';
-    const arch = helpers.getKubectlArch();
+    const arch = getKubectlArch();
     if (!cachedToolpath) {
         try {
-            kubectlDownloadPath = await toolCache.downloadTool(helpers.getkubectlDownloadURL(version, arch));
+            kubectlDownloadPath = await toolCache.downloadTool(getkubectlDownloadURL(version, arch));
         } catch (exception) {
             if (exception instanceof toolCache.HTTPError && exception.httpStatusCode === 404) {
                 throw new Error(util.format("Kubectl '%s' for '%s' arch not found.", version, arch));
@@ -53,10 +53,10 @@ export async function downloadKubectl(version: string): Promise<string> {
             }
         }
 
-        cachedToolpath = await toolCache.cacheFile(kubectlDownloadPath, kubectlToolName + helpers.getExecutableExtension(), kubectlToolName, version);
+        cachedToolpath = await toolCache.cacheFile(kubectlDownloadPath, kubectlToolName + getExecutableExtension(), kubectlToolName, version);
     }
 
-    const kubectlPath = path.join(cachedToolpath, kubectlToolName + helpers.getExecutableExtension());
+    const kubectlPath = path.join(cachedToolpath, kubectlToolName + getExecutableExtension());
     fs.chmodSync(kubectlPath, '777');
     return kubectlPath;
 }

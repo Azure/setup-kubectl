@@ -1,41 +1,79 @@
-name: TypeScript Build Check
+name: Integration test for setup-kubectl-v1
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for run'
+        required: true
+  repository_dispatch:
+    types: "SetupKubectlActionPR"
 
-on: pull_request
-
-jobs:
-  ts-build-check:
-    runs-on: ubuntu-latest
+jobs: 
+  run-integration-test:
+    name: Validate release and master branch
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout Pull Request
-        uses: actions/checkout@v2
+      - name: Set job type
+        id: job-type
+        run: if [ '${{ github.event.inputs.reason }}' == 'cron' ]; then echo "::set-output name=type::$(echo cron)"; else echo "::set-output name=type::$(echo pr)"; fi
+        shell: bash
+
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-ruby@v1
+        if: steps.job-type.outputs.type == 'pr'
+        name: Install ruby
         with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          path: original-pr
-      - name: Setup Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 12.x
-      - name: Clone and Build Pull Request
+          ruby-version: '2.7'
+
+      - name: Marking status as in-progress on PR
+        if: steps.job-type.outputs.type == 'pr'
         run: |
-          cp $GITHUB_WORKSPACE/original-pr/ $GITHUB_WORKSPACE/built-pr -r
-          cd $GITHUB_WORKSPACE/built-pr/
-          npm i
+          ruby postStatus.rb ${{github.event.client_payload.repository}} ${{github.event.client_payload.commit}} ${{secrets.L2_REPO_TOKEN}} ${{job.status}} ${{github.run_id}} ${{matrix.os}} true ${{ secrets.L2_REPO_USER }}
+      - uses: actions/checkout@v2
+        if: steps.job-type.outputs.type == 'pr'
+        name: Checkout from PR branch
+        with: 
+            repository: Azure/setup-kubectl
+            ref: ${{ github.event.client_payload.frombranch }}
+            path: 'setup-kubectl'
+
+      - uses: actions/checkout@v2
+        if: steps.job-type.outputs.type == 'cron'
+        name: Checkout from main branch
+        with: 
+            repository: Azure/setup-kubectl
+            path: 'setup-kubectl'
+            
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.x' 
+      
+      - name: Install requests library
+        run: pip install requests
+
+      - name: Building latest changes
+        if: steps.job-type.outputs.type == 'cron' || (steps.job-type.outputs.type == 'pr' && github.event.client_payload.tobranch == 'main')
+        run: |
+          cd setup-kubectl
+          npm install
           npm run build
-      - name: Compare Built Directories
-        id: diff
-        run: |
-          DIFF=$(diff $GITHUB_WORKSPACE/original-pr/lib $GITHUB_WORKSPACE/built-pr/lib -rqiEZbwBd)
-          if [ "$DIFF" != "" ]; then exit 1; else echo -e "PR contains up-to-date compiled JavaScript."; fi
-      - name: Comment Unbuilt TypeScript
-        if: failure() && steps.diff.outcome == 'failure'
-        uses: actions/github-script@v2
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.issues.createComment({
-              issue_number: ${{ github.event.number }},
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'Please compile the TypeScript code with `npm run build`. The compiled JavaScript is not up-to-date.'
-            })
+      - name: Setup kubectl
+        uses: ./setup-kubectl
+        with: 
+          version: latest
+
+      - name: Validate kubectl setup
+        run: python test/validate-kubectl.py latest
+
+      - name: Setup kubectl
+        uses: ./setup-kubectl
+        with: 
+          version: 'v1.15.1'
+
+      - name: Validate kubectl setup
+        run: python test/validate-kubectl.py 'v1.15.1' 
