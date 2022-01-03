@@ -1,19 +1,41 @@
-name: "Trigger Integration tests"
-on:
-  pull_request:
-    branches:
-      - main
-      - 'releases/*'
-jobs: 
-    trigger-integration-tests:
-      name: Trigger Integration tests
-      runs-on: ubuntu-latest
-      steps:
-        - name: Check out repository
-          uses: actions/checkout@v2
-          with:
-              path: IntegrationTests
-            
-        - name: Trigger Test run
-          run: |
-            bash ./IntegrationTests/.github/workflows/TriggerIntegrationTests.sh ${{ secrets.L2_REPO_TOKEN }} ${{ github.event.pull_request.head.sha }} ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ secrets.L2_REPO_USER }} 
+name: TypeScript Build Check
+
+on: pull_request
+
+jobs:
+  ts-build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Pull Request
+        uses: actions/checkout@v2
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+          path: original-pr
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - name: Clone and Build Pull Request
+        run: |
+          cp $GITHUB_WORKSPACE/original-pr/ $GITHUB_WORKSPACE/built-pr -r
+          cd $GITHUB_WORKSPACE/built-pr/
+          npm i
+          npm run build
+      - name: Compare Built Directories
+        id: diff
+        run: |
+          DIFF=$(diff $GITHUB_WORKSPACE/original-pr/lib $GITHUB_WORKSPACE/built-pr/lib -rqiEZbwBd)
+          if [ "$DIFF" != "" ]; then exit 1; else echo -e "PR contains up-to-date compiled JavaScript."; fi
+      - name: Comment Unbuilt TypeScript
+        if: failure() && steps.diff.outcome == 'failure'
+        uses: actions/github-script@v2
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: ${{ github.event.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Please compile the TypeScript code with `npm run build`. The compiled JavaScript is not up-to-date.'
+            })
