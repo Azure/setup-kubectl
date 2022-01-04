@@ -16,12 +16,12 @@ export async function run() {
     if (version.toLocaleLowerCase() === 'latest') {
         version = await getStableKubectlVersion();
     }
-    const cachedPath = await downloadKubectl(version);
+    // const cachedPath = await downloadKubectl(version);
 
-    core.addPath(path.dirname(cachedPath));
+    // core.addPath(path.dirname(cachedPath));
 
-    core.debug(`Kubectl tool version: '${version}' has been cached at ${cachedPath}`);
-    core.setOutput('kubectl-path', cachedPath);
+    // core.debug(`Kubectl tool version: '${version}' has been cached at ${cachedPath}`);
+    // core.setOutput('kubectl-path', cachedPath);
 }
 
 export async function getStableKubectlVersion(): Promise<string> {
