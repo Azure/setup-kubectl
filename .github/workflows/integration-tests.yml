@@ -23,14 +23,6 @@ jobs:
         shell: bash
 
       - uses: actions/checkout@v2
-
-      - uses: actions/setup-ruby@v1
-        if: steps.job-type.outputs.type == 'pr'
-        name: Install ruby
-        with:
-          ruby-version: '2.7'
-
-      - uses: actions/checkout@v2
         if: steps.job-type.outputs.type == 'pr'
         name: Checkout from PR branch
         with: 
