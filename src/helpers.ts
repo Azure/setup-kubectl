@@ -20,7 +20,6 @@ export function getkubectlDownloadURL(version: string, arch: string): string {
         case 'Windows_NT':
         default:
             return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/windows/%s/kubectl.exe', version, arch);
-
     }
 }
 
