@@ -13,6 +13,9 @@ jobs:
   run-integration-test:
     name: Validate release and master branch
     runs-on: ubuntu-latest
+    env:
+      KUBECONFIG: /home/runner/.kube/config
+      PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
     steps:
       - uses: actions/checkout@v2
         name: Checkout from PR branch
@@ -35,7 +38,7 @@ jobs:
         run: pip install requests
 
       - name: Validate kubectl setup
-        run: python test/validate-kubectl.py latest
+        run: python ./test/validate-kubectl.py latest
 
       - name: Setup kubectl
         uses: ./setup-kubectl
