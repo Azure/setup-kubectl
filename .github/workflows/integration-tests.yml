@@ -1,12 +1,13 @@
 name: Integration test for setup-kubectl-v1
-on:
-  workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for run'
-        required: true
-  repository_dispatch:
-    types: "SetupKubectlActionPR"
+on: # rebuild any PRs and main branch changes
+  pull_request:
+    branches:
+      - main
+      - 'releases/*'
+  push:
+    branches:
+      - main
+      - 'releases/*'
 
 jobs: 
   run-integration-test:
