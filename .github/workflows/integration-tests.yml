@@ -30,10 +30,6 @@ jobs:
         with:
           ruby-version: '2.7'
 
-      - name: Marking status as in-progress on PR
-        if: steps.job-type.outputs.type == 'pr'
-        run: |
-          ruby postStatus.rb ${{github.event.client_payload.repository}} ${{github.event.client_payload.commit}} ${{secrets.L2_REPO_TOKEN}} ${{job.status}} ${{github.run_id}} ${{matrix.os}} true ${{ secrets.L2_REPO_USER }}
       - uses: actions/checkout@v2
         if: steps.job-type.outputs.type == 'pr'
         name: Checkout from PR branch
