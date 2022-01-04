@@ -12,20 +12,14 @@ on: # rebuild any PRs and main branch changes
 jobs: 
   run-integration-test:
     name: Validate release and master branch
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         name: Checkout from PR branch
-        with:
-            path: 'setup-kubectl'
             
       - id: action-npm-build
         name: npm install and build
         run: |
-          cd setup-kubectl
           echo $PR_BASE_REF
           if [[ $PR_BASE_REF != releases/* ]]; then
             npm install
