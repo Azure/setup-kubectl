@@ -38,10 +38,10 @@ jobs:
         run: pip install requests
 
       - name: Validate kubectl setup
-        run: python ./test/validate-kubectl.py latest
+        run: python test/validate-kubectl.py latest
 
       - name: Setup kubectl
-        uses: ./setup-kubectl
+        uses: ./
         with: 
           version: 'v1.15.1'
 
