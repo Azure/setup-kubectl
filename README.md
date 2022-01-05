@@ -1,10 +1,10 @@
-# Setup Kubectl
+0# Setup Kubectl
 #### Sample workflow to install a specific version of kubectl binary on the runner.
 
 Acceptable values are latest or any semantic version string like `v1.15.0`. Use this action in workflow to define which version of kubectl will be used.
 
 ```yaml
-- uses: azure/setup-kubectl@v1
+- uses: azure/setup-kubectl@v2.0
   with:
     version: '<version>' # default is latest stable
   id: install
