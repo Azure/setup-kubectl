@@ -106,7 +106,7 @@ describe('Testing all functions in run file.', () => {
         expect(toolCache.downloadTool).toBeCalled();
         expect(toolCache.cacheFile).toBeCalled();
         expect(os.type).toBeCalled();
-        expect(fs.chmodSync).toBeCalledWith(path.join('pathToCachedTool', 'kubectl.exe'), '777');
+        expect(fs.chmodSync).toBeCalledWith(path.join('pathToCachedTool', 'kubectl.exe'), '775');
     });
 
     test('downloadKubectl() - throw DownloadKubectlFailed error when unable to download kubectl', async () => {
@@ -144,7 +144,7 @@ describe('Testing all functions in run file.', () => {
         expect(await run.downloadKubectl('v1.15.0')).toBe(path.join('pathToCachedTool', 'kubectl.exe'));
         expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0');
         expect(os.type).toBeCalled();
-        expect(fs.chmodSync).toBeCalledWith(path.join('pathToCachedTool', 'kubectl.exe'), '777');
+        expect(fs.chmodSync).toBeCalledWith(path.join('pathToCachedTool', 'kubectl.exe'), '775');
         expect(toolCache.downloadTool).not.toBeCalled();
     });
 
