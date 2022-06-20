@@ -3,13 +3,13 @@ on: # rebuild any PRs and main branch changes
   pull_request:
     branches:
       - main
-      - 'releases/*'
+      - "releases/*"
   push:
     branches:
       - main
-      - 'releases/*'
+      - "releases/*"
 
-jobs: 
+jobs:
   run-integration-test:
     name: Validate release and master branch
     runs-on: ubuntu-latest
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         name: Checkout from PR branch
-            
+
       - id: action-npm-build
         name: npm install and build
         run: |
@@ -28,22 +28,22 @@ jobs:
             npm install
             npm run build
           fi
-      
+
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.x' 
-      
+          python-version: "3.x"
+
       - name: Install requests library
         run: pip install requests
 
       - name: Validate kubectl setup
-        run: python test/validate-kubectl.py latest
+        run: python test/validate-kubectl.py !v1.15.1
 
       - name: Setup kubectl
         uses: ./
-        with: 
-          version: 'v1.15.1'
+        with:
+          version: "v1.15.1"
 
       - name: Validate kubectl setup
-        run: python test/validate-kubectl.py 'v1.15.1' 
+        run: python test/validate-kubectl.py 'v1.15.1'
