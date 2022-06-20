@@ -22,18 +22,19 @@ try:
         version_to_check = version_to_check[1:]
         print(f'checking NOT version: {version_to_check}')
         PASSED = True if installed_version_info['clientVersion']['gitVersion'] != version_to_check else False
-    elif version_to_check == 'latest':
-        response = None
-        time_to_sleep = 2
-        for _ in range(10):
-            response = requests.get(
-                'https://storage.googleapis.com/kubernetes-release/release/stable.txt')
-            if response.status_code == 200:
-                break
-            print('Failed to obtain latest version info, retrying.')
-            time.sleep(time_to_sleep)
-            time_to_sleep *= 2
-        version_to_check = response.content.decode('utf-8')
+    else:
+        if version_to_check == 'latest':
+            response = None
+            time_to_sleep = 2
+            for _ in range(10):
+                response = requests.get(
+                    'https://storage.googleapis.com/kubernetes-release/release/stable.txt')
+                if response.status_code == 200:
+                    break
+                print('Failed to obtain latest version info, retrying.')
+                time.sleep(time_to_sleep)
+                time_to_sleep *= 2
+            version_to_check = response.content.decode('utf-8')
         print(f'version_to_check: {version_to_check}')
         PASSED = True if installed_version_info['clientVersion']['gitVersion'] == version_to_check else False
 except Exception as ex:
