@@ -20,7 +20,6 @@ except Exception as ex:
 try:
     if version_to_check[0] == '!':
         print(f'checking NOT version: {version_to_check[1:]}')
-        print(f'version_to_check: {version_to_check}')
         PASSED = True if installed_version_info['clientVersion']['gitVersion'] != version_to_check[1:] else False
     elif version_to_check == 'latest':
         response = None
@@ -42,3 +41,4 @@ except:
 if not PASSED:
     sys.exit('Setting up of '+version_to_check+' kubectl failed')
 print('Test passed')
+sys.exit(0)
