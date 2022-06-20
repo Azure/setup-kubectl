@@ -18,7 +18,10 @@ except Exception as ex:
     sys.exit('kubectl not installed')
 
 try:
-    if version_to_check == 'latest':
+    if version_to_check[0] == '!':
+        print(f'version_to_check: {version_to_check}')
+        PASSED = True if installed_version_info['clientVersion']['gitVersion'] != version_to_check[1:] else False
+    elif version_to_check == 'latest':
         response = None
         time_to_sleep = 2
         for _ in range(10):
