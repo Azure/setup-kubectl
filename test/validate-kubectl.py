@@ -34,7 +34,7 @@ try:
             time_to_sleep *= 2
         version_to_check = response.content.decode('utf-8')
         print(f'version_to_check: {version_to_check}')
-    PASSED = True if installed_version_info['clientVersion']['gitVersion'] == version_to_check else False
+        PASSED = True if installed_version_info['clientVersion']['gitVersion'] == version_to_check else False
 except:
     pass
 
