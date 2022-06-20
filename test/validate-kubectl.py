@@ -19,8 +19,9 @@ except Exception as ex:
 
 try:
     if version_to_check[0] == '!':
-        print(f'checking NOT version: {version_to_check[1:]}')
-        PASSED = True if installed_version_info['clientVersion']['gitVersion'] != version_to_check[1:] else False
+        version_to_check = version_to_check[1:]
+        print(f'checking NOT version: {version_to_check}')
+        PASSED = True if installed_version_info['clientVersion']['gitVersion'] != version_to_check else False
     elif version_to_check == 'latest':
         response = None
         time_to_sleep = 2
@@ -35,7 +36,8 @@ try:
         version_to_check = response.content.decode('utf-8')
         print(f'version_to_check: {version_to_check}')
         PASSED = True if installed_version_info['clientVersion']['gitVersion'] == version_to_check else False
-except:
+except Exception as ex:
+    print(f'Exception: {ex}')
     pass
 
 if not PASSED:
