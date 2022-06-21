@@ -45,7 +45,11 @@ try:
     # Exact Match
     else:
         if version_to_check == 'latest':
+            print('checking latest version')
             desired_version = get_latest_version()
+        else:
+            desired_version = version_to_check
+
         print(f'desired version: {desired_version}')
         if installed_version != desired_version:
             print(
