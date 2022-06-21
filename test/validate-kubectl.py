@@ -19,7 +19,7 @@ def get_latest_version():
     return response.content.decode('utf-8')
 
 
-version_to_check = sys.argv[1]
+version_arg = sys.argv[1]
 installed_version_info = None
 PASSED = True
 
@@ -35,8 +35,8 @@ except Exception as ex:
 try:
     installed_version = installed_version_info['clientVersion']['gitVersion']
     # NOT Match
-    if version_to_check[0] == '!':
-        undesired_version = version_to_check[1:]
+    if version_arg[0] == '!':
+        undesired_version = version_arg[1:]
         print(f'undesired version: {undesired_version}')
         if installed_version == undesired_version:
             print(
@@ -44,11 +44,11 @@ try:
             PASSED = False
     # Exact Match
     else:
-        if version_to_check == 'latest':
+        if version_arg == 'latest':
             print('checking latest version')
             desired_version = get_latest_version()
         else:
-            desired_version = version_to_check
+            desired_version = version_arg
 
         print(f'desired version: {desired_version}')
         if installed_version != desired_version:
@@ -60,6 +60,6 @@ except Exception as ex:
     pass
 
 if not PASSED:
-    sys.exit('Setting up of '+version_to_check+' kubectl failed')
+    sys.exit('Setting up of '+version_arg+' kubectl failed')
 print('Test passed')
 sys.exit()
