@@ -33,18 +33,23 @@ except Exception as ex:
     sys.exit('kubectl not installed')
 
 try:
+    installed_version = installed_version_info['clientVersion']['gitVersion']
     # NOT Match
     if version_to_check[0] == '!':
-        version_to_check = version_to_check[1:]
-        print(f'checking NOT version: {version_to_check}')
-        if installed_version_info['clientVersion']['gitVersion'] == version_to_check:
+        undesired_version = version_to_check[1:]
+        print(f'undesired version: {undesired_version}')
+        if installed_version == undesired_version:
+            print(
+                f'installed version ({installed_version}) matches undesire {undesired_version} - FAIL')
             PASSED = False
     # Exact Match
     else:
         if version_to_check == 'latest':
-            version_to_check = get_latest_version()
-        print(f'version_to_check: {version_to_check}')
-        if installed_version_info['clientVersion']['gitVersion'] != version_to_check:
+            desired_version = get_latest_version()
+        print(f'desired version: {desired_version}')
+        if installed_version != desired_version:
+            print(
+                f'installed version ({installed_version}) does not match desired ({desired_version}) - FAIL')
             PASSED = False
 except Exception as ex:
     print(f'Exception: {ex}')
