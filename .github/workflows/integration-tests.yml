@@ -1,49 +1,49 @@
 name: Integration test for setup-kubectl
 on: # rebuild any PRs and main branch changes
-  pull_request:
-    branches:
-      - main
-      - 'releases/*'
-  push:
-    branches:
-      - main
-      - 'releases/*'
+   pull_request:
+      branches:
+         - main
+         - 'releases/*'
+   push:
+      branches:
+         - main
+         - 'releases/*'
 
-jobs: 
-  run-integration-test:
-    name: Validate release and master branch
-    runs-on: ubuntu-latest
-    env:
-      KUBECONFIG: /home/runner/.kube/config
-      PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
-    steps:
-      - uses: actions/checkout@v2
-        name: Checkout from PR branch
-            
-      - id: action-npm-build
-        name: npm install and build
-        run: |
-          echo $PR_BASE_REF
-          if [[ $PR_BASE_REF != releases/* ]]; then
-            npm install
-            npm run build
-          fi
-      
-      - uses: actions/setup-python@v2
-        name: Install Python
-        with:
-          python-version: '3.x' 
-      
-      - name: Install requests library
-        run: pip install requests
+jobs:
+   run-integration-test:
+      name: Validate release and master branch
+      runs-on: ubuntu-latest
+      env:
+         KUBECONFIG: /home/runner/.kube/config
+         PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+      steps:
+         - uses: actions/checkout@v2
+           name: Checkout from PR branch
 
-      - name: Validate kubectl setup
-        run: python test/validate-kubectl.py latest
+         - id: action-npm-build
+           name: npm install and build
+           run: |
+              echo $PR_BASE_REF
+              if [[ $PR_BASE_REF != releases/* ]]; then
+                npm install
+                npm run build
+              fi
 
-      - name: Setup kubectl
-        uses: ./
-        with: 
-          version: 'v1.15.1'
+         - uses: actions/setup-python@v2
+           name: Install Python
+           with:
+              python-version: '3.x'
 
-      - name: Validate kubectl setup
-        run: python test/validate-kubectl.py 'v1.15.1' 
+         - name: Install requests library
+           run: pip install requests
+
+         - name: Validate kubectl setup
+           run: python test/validate-kubectl.py latest
+
+         - name: Setup kubectl
+           uses: ./
+           with:
+              version: 'v1.15.1'
+
+         - name: Validate kubectl setup
+           run: python test/validate-kubectl.py 'v1.15.1'
