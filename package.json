@@ -25,7 +25,7 @@
    "devDependencies": {
       "@types/jest": "^26.0.0",
       "@types/node": "^12.0.4",
-      "@vercel/ncc": "^0.33.1",
+      "@vercel/ncc": "^0.34.0",
       "jest": "^26.0.1",
       "prettier": "2.7.1",
       "ts-jest": "^26.0.0",
