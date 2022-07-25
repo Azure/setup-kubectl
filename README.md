@@ -1,4 +1,5 @@
 # Setup Kubectl
+
 #### Sample workflow to install a specific version of kubectl binary on the runner.
 
 Acceptable values are latest or any semantic version string like `v1.15.0`. Use this action in workflow to define which version of kubectl will be used.
@@ -6,14 +7,15 @@ Acceptable values are latest or any semantic version string like `v1.15.0`. Use 
 ```yaml
 - uses: azure/setup-kubectl@v3
   with:
-    version: '<version>' # default is latest stable
+     version: '<version>' # default is latest stable
   id: install
 ```
+
 Refer to the action metadata file for details about all the inputs https://github.com/Azure/setup-kubectl/blob/main/action.yml
 
 # Contributing
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
 the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
 
@@ -23,4 +25,4 @@ provided by the bot. You will only need to do this once across all repos using o
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments. 
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
