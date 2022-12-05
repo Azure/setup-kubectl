@@ -1,31 +1,34 @@
 {
-    "name": "setup-kubectl-action",
-    "version": "0.0.0",
-    "private": true,
-    "main": "lib/index.js",
-    "scripts": {
-        "build": "ncc build src/run.ts -o lib",
-        "test": "jest",
-        "test-coverage": "jest --coverage"
-    },
-    "keywords": [
-        "actions",
-        "node",
-        "setup"
-    ],
-    "author": "GitHub",
-    "license": "MIT",
-    "dependencies": {
-        "@actions/core": "^1.2.6",
-        "@actions/exec": "^1.0.0",
-        "@actions/tool-cache": "^1.0.0"
-    },
-    "devDependencies": {
-        "@types/node": "^12.0.4",
-        "@vercel/ncc": "^0.33.1",
-        "jest": "^26.0.1",
-        "@types/jest": "^26.0.1",
-        "ts-jest": "^26.0.1",
-        "typescript": "3.9.2"
-    }
+   "name": "setup-kubectl-action",
+   "version": "0.0.0",
+   "private": true,
+   "main": "lib/index.js",
+   "scripts": {
+      "build": "ncc build src/run.ts -o lib",
+      "test": "jest",
+      "test-coverage": "jest --coverage",
+      "format": "prettier --write .",
+      "format-check": "prettier --check ."
+   },
+   "keywords": [
+      "actions",
+      "node",
+      "setup"
+   ],
+   "author": "GitHub",
+   "license": "MIT",
+   "dependencies": {
+      "@actions/core": "^1.10.0",
+      "@actions/exec": "^1.0.0",
+      "@actions/tool-cache": "^1.0.0"
+   },
+   "devDependencies": {
+      "@types/jest": "^26.0.0",
+      "@types/node": "^12.0.4",
+      "@vercel/ncc": "^0.34.0",
+      "jest": "^26.0.1",
+      "prettier": "2.7.1",
+      "ts-jest": "^26.0.0",
+      "typescript": "3.9.2"
+   }
 }
