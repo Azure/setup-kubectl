@@ -12,26 +12,14 @@ export function getKubectlArch(): string {
 export function getkubectlDownloadURL(version: string, arch: string): string {
    switch (os.type()) {
       case 'Linux':
-         return util.format(
-            'https://dl.k8s.io/release/v%s/bin/linux/%s/kubectl',            
-            version,
-            arch
-         )
+         return `https://dl.k8s.io/release/v${version}/bin/linux/${arch}/kubectl`
 
       case 'Darwin':
-         return util.format(
-            'https://dl.k8s.io/release/v%s/bin/darwin/%s/kubectl',
-            version,
-            arch
-         )
+         return `https://dl.k8s.io/release/v${version}/bin/darwin/${arch}/kubectl`
 
       case 'Windows_NT':
       default:
-         return util.format(
-            'https://dl.k8s.io/release/v%s/bin/windows/%s/kubectl.exe',
-            version,
-            arch
-         )
+         return `https://dl.k8s.io/release/v${version}/bin/windows/${arch}/kubectl.exe`
    }
 }
 
