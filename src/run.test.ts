@@ -45,7 +45,7 @@ describe('Testing all functions in run file.', () => {
       (arch) => {
          jest.spyOn(os, 'type').mockReturnValue('Linux')
          const kubectlLinuxUrl = util.format(
-            'https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/%s/kubectl',
+            'https://dl.k8s.io/release/v1.15.0/bin/linux/%s/kubectl',
             arch
          )
 
@@ -59,7 +59,7 @@ describe('Testing all functions in run file.', () => {
       (arch) => {
          jest.spyOn(os, 'type').mockReturnValue('Darwin')
          const kubectlDarwinUrl = util.format(
-            'https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/darwin/%s/kubectl',
+            'https://dl.k8s.io/release/v1.15.0/bin/darwin/%s/kubectl',
             arch
          )
 
@@ -74,7 +74,7 @@ describe('Testing all functions in run file.', () => {
          jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
 
          const kubectlWindowsUrl = util.format(
-            'https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/windows/%s/kubectl.exe',
+            'https://dl.k8s.io/release/v1.15.0/bin/windows/%s/kubectl.exe',
             arch
          )
          expect(getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlWindowsUrl)
