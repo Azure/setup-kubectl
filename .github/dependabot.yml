@@ -1,17 +1,17 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    schedule:
-      interval: "weekly"
-    groups:
-      actions:
-        patterns:
-          - "*"
-  - package-ecosystem: "github-actions"
-    directory: "/template/workflows/helm/.github/workflows"
-    schedule:
-      interval: "weekly"
-    groups:
-      actions:
-        patterns:
-          - "*"
+   - package-ecosystem: 'npm'
+     schedule:
+        interval: 'weekly'
+     groups:
+        actions:
+           patterns:
+              - '*'
+   - package-ecosystem: 'github-actions'
+     directory: '/template/workflows/helm/.github/workflows'
+     schedule:
+        interval: 'weekly'
+     groups:
+        actions:
+           patterns:
+              - '*'
