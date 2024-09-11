@@ -17,7 +17,7 @@ jobs:
          KUBECONFIG: /home/runner/.kube/config
          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
       steps:
-         - uses: actions/checkout@v2
+         - uses: actions/checkout@v4
            name: Checkout from PR branch
 
          - id: action-npm-build
@@ -29,7 +29,7 @@ jobs:
                 npm run build
               fi
 
-         - uses: actions/setup-python@v2
+         - uses: actions/setup-python@v5
            name: Install Python
            with:
               python-version: '3.x'
