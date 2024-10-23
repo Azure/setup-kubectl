@@ -37,13 +37,18 @@ jobs:
          - name: Install requests library
            run: pip install requests
 
+         - name: Setup kubectl latest
+           uses: ./
+           with:
+              version: 'latest'
+
          - name: Validate kubectl setup
            run: python test/validate-kubectl.py latest
 
-         - name: Setup kubectl
+         - name: Setup kubectl old version
            uses: ./
            with:
               version: 'v1.15.1'
 
-         - name: Validate kubectl setup
+         - name: Validate kubectl setup old version
            run: python test/validate-kubectl.py 'v1.15.1'
