@@ -90,7 +90,7 @@ describe('Testing all functions in run file.', () => {
 
       expect(await run.getStableKubectlVersion()).toBe('v1.20.4')
       expect(toolCache.downloadTool).toBeCalled()
-      expect(fs.readFileSync).toBeCalledWith('pathToTool', 'utf8')
+      expect(fs.readFileSync).toHaveBeenCalledWith('pathToTool', 'utf8')
    })
 
    test('getStableKubectlVersion() - return default v1.15.0 if version read is empty', async () => {
@@ -101,7 +101,7 @@ describe('Testing all functions in run file.', () => {
 
       expect(await run.getStableKubectlVersion()).toBe('v1.15.0')
       expect(toolCache.downloadTool).toBeCalled()
-      expect(fs.readFileSync).toBeCalledWith('pathToTool', 'utf8')
+      expect(fs.readFileSync).toHaveBeenCalledWith('pathToTool', 'utf8')
    })
 
    test('getStableKubectlVersion() - return default v1.15.0 if unable to download file', async () => {
@@ -127,11 +127,11 @@ describe('Testing all functions in run file.', () => {
       expect(await run.downloadKubectl('v1.15.0')).toBe(
          path.join('pathToCachedTool', 'kubectl.exe')
       )
-      expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0')
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.15.0')
       expect(toolCache.downloadTool).toBeCalled()
       expect(toolCache.cacheFile).toBeCalled()
       expect(os.type).toBeCalled()
-      expect(fs.chmodSync).toBeCalledWith(
+      expect(fs.chmodSync).toHaveBeenCalledWith(
          path.join('pathToCachedTool', 'kubectl.exe'),
          '775'
       )
@@ -146,7 +146,7 @@ describe('Testing all functions in run file.', () => {
       await expect(run.downloadKubectl('v1.15.0')).rejects.toThrow(
          'DownloadKubectlFailed'
       )
-      expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0')
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.15.0')
       expect(toolCache.downloadTool).toBeCalled()
    })
 
@@ -168,7 +168,7 @@ describe('Testing all functions in run file.', () => {
          )
       )
       expect(os.arch).toBeCalled()
-      expect(toolCache.find).toBeCalledWith('kubectl', kubectlVersion)
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', kubectlVersion)
       expect(toolCache.downloadTool).toBeCalled()
    })
 
@@ -181,9 +181,9 @@ describe('Testing all functions in run file.', () => {
       expect(await run.downloadKubectl('v1.15.0')).toBe(
          path.join('pathToCachedTool', 'kubectl.exe')
       )
-      expect(toolCache.find).toBeCalledWith('kubectl', 'v1.15.0')
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.15.0')
       expect(os.type).toBeCalled()
-      expect(fs.chmodSync).toBeCalledWith(
+      expect(fs.chmodSync).toHaveBeenCalledWith(
          path.join('pathToCachedTool', 'kubectl.exe'),
          '775'
       )
@@ -200,9 +200,9 @@ describe('Testing all functions in run file.', () => {
       jest.spyOn(core, 'setOutput').mockImplementation()
 
       expect(await run.run()).toBeUndefined()
-      expect(core.getInput).toBeCalledWith('version', {required: true})
-      expect(core.addPath).toBeCalledWith('pathToCachedTool')
-      expect(core.setOutput).toBeCalledWith(
+      expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
+      expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
+      expect(core.setOutput).toHaveBeenCalledWith(
          'kubectl-path',
          path.join('pathToCachedTool', 'kubectl.exe')
       )
@@ -222,12 +222,12 @@ describe('Testing all functions in run file.', () => {
       jest.spyOn(core, 'setOutput').mockImplementation()
 
       expect(await run.run()).toBeUndefined()
-      expect(toolCache.downloadTool).toBeCalledWith(
+      expect(toolCache.downloadTool).toHaveBeenCalledWith(
          'https://storage.googleapis.com/kubernetes-release/release/stable.txt'
       )
-      expect(core.getInput).toBeCalledWith('version', {required: true})
-      expect(core.addPath).toBeCalledWith('pathToCachedTool')
-      expect(core.setOutput).toBeCalledWith(
+      expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
+      expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
+      expect(core.setOutput).toHaveBeenCalledWith(
          'kubectl-path',
          path.join('pathToCachedTool', 'kubectl.exe')
       )
