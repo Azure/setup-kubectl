@@ -12,7 +12,5 @@ updates:
      directory: .github/workflows
      schedule:
         interval: weekly
-     groups:
-        actions:
-           patterns:
-              - '*'
+     labels:
+        - dependencies
