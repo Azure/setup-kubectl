@@ -4,4 +4,4 @@
 
 ### Changed
 
--  #90 Migrate to node 20 as node 16 is deprecated
+- #90 Migrate to node 20 as node 16 is deprecated
