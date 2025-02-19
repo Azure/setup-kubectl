@@ -89,5 +89,3 @@ export async function downloadKubectl(version: string): Promise<string> {
    fs.chmodSync(kubectlPath, '775')
    return kubectlPath
 }
-
-run().catch(core.setFailed)
