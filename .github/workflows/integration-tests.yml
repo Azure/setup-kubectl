@@ -25,7 +25,7 @@ jobs:
            run: |
               echo $PR_BASE_REF
               if [[ $PR_BASE_REF != releases/* ]]; then
-                npm install
+                npm install --no-bin-links
                 npm run build
                 # remove node_modules to match production environment where only index.js is present
                 rm -rf node_modules 
