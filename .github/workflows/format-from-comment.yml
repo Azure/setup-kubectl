@@ -1,0 +1,64 @@
+name: Format via PR Comment
+
+on:
+   issue_comment:
+      types: [created]
+
+permissions:
+   contents: write
+   pull-requests: write
+
+jobs:
+   format-on-comment:
+      if: >
+         github.event.issue.pull_request &&
+         startsWith(github.event.comment.body, '/format')
+      runs-on: ubuntu-latest
+      steps:
+         - name: Get PR Info
+           id: pr
+           uses: actions/github-script@v7
+           with:
+              script: |
+                 const pr = await github.rest.pulls.get({
+                   owner: context.repo.owner,
+                   repo: context.repo.repo,
+                   pull_number: context.payload.issue.number
+                 });
+
+                 core.setOutput("branch", pr.data.head.ref);
+                 core.setOutput("repo", pr.data.head.repo.full_name);
+                 core.setOutput("default_branch", pr.data.base.ref);
+
+         - name: Checkout PR branch
+           uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+           with:
+              repository: ${{ steps.pr.outputs.repo }}
+              ref: ${{ steps.pr.outputs.branch }}
+              token: ${{ secrets.GITHUB_TOKEN }}
+
+         - name: Set up Node.js
+           uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+           with:
+              node-version: 20
+
+         - name: Install dependencies
+           run: npm ci
+
+         - name: Run Prettier format
+           run: npm run format
+
+         - name: Commit and push changes
+           run: |
+              git config user.name "${{ github.actor }}"
+              git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+              git add .
+
+              if git diff --cached --quiet; then
+                echo "✅ No formatting changes."
+              else
+                git commit -s -m "style: auto-format via /format comment"
+                git push origin HEAD:${{ steps.pr.outputs.branch }}
+                echo "✅ Formatting committed to PR branch."
+              fi
