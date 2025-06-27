@@ -1,2 +1,9 @@
+set +e
 npm test
-npm run format-check
+# Run format check
+npm run format-check || {
+  echo ""
+  echo "❌ Formatting check failed."
+  echo "💡 Run 'npm run format' or 'prettier --write .' to fix formatting issues."
+  exit 1
+}
