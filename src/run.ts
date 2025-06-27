@@ -94,34 +94,40 @@ export async function downloadKubectl(version: string): Promise<string> {
    return kubectlPath
 }
 export async function resolveKubectlVersion(
-   version: string, octo:Octokit): Promise<string> {
+   version: string,
+   octo: Octokit
+): Promise<string> {
    const cleanedVersion = version.trim()
 
    /*------ detect "major.minor" only ----------------*/
-   const mmMatch=cleanedVersion.match(/^v?(?<major>\d+)\.(?<minor>\d+)$/)
+   const mmMatch = cleanedVersion.match(/^v?(?<major>\d+)\.(?<minor>\d+)$/)
    if (!mmMatch || !mmMatch.groups) {
-       // User already provided a full version such as 1.27.15 – do nothing.
-      return cleanedVersion.startsWith('v') ? cleanedVersion : `v${cleanedVersion}`
+      // User already provided a full version such as 1.27.15 – do nothing.
+      return cleanedVersion.startsWith('v')
+         ? cleanedVersion
+         : `v${cleanedVersion}`
    }
    const {major, minor} = mmMatch.groups
 
-    /* -------------------- fetch recent tags from GitHub ----------------- */
-   const resp= await octo.repos.listTags({
-        owner: 'kubernetes',
-        repo: 'kubernetes',
-         per_page: 100,
-    })
+   /* -------------------- fetch recent tags from GitHub ----------------- */
+   const resp = await octo.repos.listTags({
+      owner: 'kubernetes',
+      repo: 'kubernetes',
+      per_page: 100
+   })
 
-    /* -------------------- find newest patch within that line ------------ */
-  const wantedPrefix = `${major}.${minor}.`
-  const newest = resp.data
-    .map(tag => tag.name.replace(/^v/, ''))       // strip leading v
-    .filter(v => v.startsWith(wantedPrefix))      // keep only 1.27.*
-    .sort(semver.rcompare)[0]                     // newest first
+   /* -------------------- find newest patch within that line ------------ */
+   const wantedPrefix = `${major}.${minor}.`
+   const newest = resp.data
+      .map((tag) => tag.name.replace(/^v/, '')) // strip leading v
+      .filter((v) => v.startsWith(wantedPrefix)) // keep only 1.27.*
+      .sort(semver.rcompare)[0] // newest first
 
-  if (!newest) {
-    throw new Error(`Could not find any ${wantedPrefix}* tag in kubernetes/kubernetes`)
-  }
+   if (!newest) {
+      throw new Error(
+         `Could not find any ${wantedPrefix}* tag in kubernetes/kubernetes`
+      )
+   }
 
-  return `v${newest}` // always return with leading "v"
+   return `v${newest}` // always return with leading "v"
 }
