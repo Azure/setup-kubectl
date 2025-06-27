@@ -1,10 +1,12 @@
 import * as path from 'path'
 import * as util from 'util'
 import * as fs from 'fs'
-
+import {Octokit} from '@octokit/rest'
+import * as semver from 'semver'
 import * as toolCache from '@actions/tool-cache'
 import * as core from '@actions/core'
 
+export const octo = new Octokit()
 import {
    getkubectlDownloadURL,
    getKubectlArch,
@@ -20,6 +22,8 @@ export async function run() {
    let version = core.getInput('version', {required: true})
    if (version.toLocaleLowerCase() === 'latest') {
       version = await getStableKubectlVersion()
+   } else {
+      version = await resolveKubectlVersion(version, octo)
    }
    const cachedPath = await downloadKubectl(version)
 
@@ -88,4 +92,36 @@ export async function downloadKubectl(version: string): Promise<string> {
    )
    fs.chmodSync(kubectlPath, '775')
    return kubectlPath
+}
+export async function resolveKubectlVersion(
+   version: string, octo:Octokit): Promise<string> {
+   const cleanedVersion = version.trim()
+
+   /*------ detect "major.minor" only ----------------*/
+   const mmMatch=cleanedVersion.match(/^v?(?<major>\d+)\.(?<minor>\d+)$/)
+   if (!mmMatch || !mmMatch.groups) {
+       // User already provided a full version such as 1.27.15 – do nothing.
+      return cleanedVersion.startsWith('v') ? cleanedVersion : `v${cleanedVersion}`
+   }
+   const {major, minor} = mmMatch.groups
+
+    /* -------------------- fetch recent tags from GitHub ----------------- */
+   const resp= await octo.repos.listTags({
+        owner: 'kubernetes',
+        repo: 'kubernetes',
+         per_page: 100,
+    })
+
+    /* -------------------- find newest patch within that line ------------ */
+  const wantedPrefix = `${major}.${minor}.`
+  const newest = resp.data
+    .map(tag => tag.name.replace(/^v/, ''))       // strip leading v
+    .filter(v => v.startsWith(wantedPrefix))      // keep only 1.27.*
+    .sort(semver.rcompare)[0]                     // newest first
+
+  if (!newest) {
+    throw new Error(`Could not find any ${wantedPrefix}* tag in kubernetes/kubernetes`)
+  }
+
+  return `v${newest}` // always return with leading "v"
 }
