@@ -20,11 +20,13 @@
    "dependencies": {
       "@actions/core": "^1.11.1",
       "@actions/exec": "^1.0.0",
-      "@actions/tool-cache": "^2.0.2"
+      "@actions/tool-cache": "^2.0.2",
+      "@octokit/rest": "^22.0.0",
+      "ncc": "^0.3.6"
    },
    "devDependencies": {
       "@types/jest": "^30.0.0",
-      "@types/node": "^24.0.2",
+      "@types/node": "^24.0.4",
       "@vercel/ncc": "^0.38.3",
       "jest": "^30.0.0",
       "prettier": "3.5.3",
