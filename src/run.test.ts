@@ -1,14 +1,14 @@
 jest.mock('@octokit/rest', () => {
-  const listTags = jest.fn()
-  return {
-    Octokit: jest.fn().mockImplementation(() => ({
-      repos: { listTags }
-    }))
-  }
+   const listTags = jest.fn()
+   return {
+      Octokit: jest.fn().mockImplementation(() => ({
+         repos: {listTags}
+      }))
+   }
 })
 
 import * as run from './run'
-import {octo} from './run' 
+import {octo} from './run'
 import {
    getkubectlDownloadURL,
    getKubectlArch,
@@ -25,7 +25,7 @@ describe('Testing all functions in run file.', () => {
    beforeEach(() => {
       jest.resetAllMocks()
    })
-   
+
    test('getExecutableExtension() - return .exe when os is Windows', () => {
       jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
       expect(getExecutableExtension()).toBe('.exe')
@@ -181,31 +181,29 @@ describe('Testing all functions in run file.', () => {
    test('resolveKubectlVersion() - major.minor expanded to latest patch', async () => {
       // mock GitHub tags list
       jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
-         data: [
-            {name: 'v1.27.13'}, {name: 'v1.27.15'}, {name: 'v1.26.6'}
-         ]
+         data: [{name: 'v1.27.13'}, {name: 'v1.27.15'}, {name: 'v1.26.6'}]
       } as any)
 
       const tag = await run.resolveKubectlVersion('1.27', octo)
       expect(tag).toBe('v1.27.15')
    })
    test('resolveKubectlVersion() - returns matching full version unchanged', async () => {
-    // When a full version (already with patch) is provided, assume it is returned as is.
-    // Even if the GitHub tag list contains the same version.
-    jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
-        data: [{name: 'v1.27.15'}, {name: 'v1.27.13'}]
-    } as any)
-    const tag = await run.resolveKubectlVersion('v1.27.15', octo)
-    expect(tag).toBe('v1.27.15')
-})
-test('resolveKubectlVersion() - selects the only available matching version', async () => {
-    // When only one tag matches the provided major.minor, that tag is returned.
-    jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
-        data: [{name: 'v1.28.0'}, {name: 'v1.27.99'}, {name: 'v1.26.5'}]
-    } as any)
-    const tag = await run.resolveKubectlVersion('1.27', octo)
-    expect(tag).toBe('v1.27.99')
-})
+      // When a full version (already with patch) is provided, assume it is returned as is.
+      // Even if the GitHub tag list contains the same version.
+      jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
+         data: [{name: 'v1.27.15'}, {name: 'v1.27.13'}]
+      } as any)
+      const tag = await run.resolveKubectlVersion('v1.27.15', octo)
+      expect(tag).toBe('v1.27.15')
+   })
+   test('resolveKubectlVersion() - selects the only available matching version', async () => {
+      // When only one tag matches the provided major.minor, that tag is returned.
+      jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
+         data: [{name: 'v1.28.0'}, {name: 'v1.27.99'}, {name: 'v1.26.5'}]
+      } as any)
+      const tag = await run.resolveKubectlVersion('1.27', octo)
+      expect(tag).toBe('v1.27.99')
+   })
    test('run() - download specified version and set output', async () => {
       jest.spyOn(core, 'getInput').mockReturnValue('v1.15.5')
       jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool')
@@ -245,5 +243,4 @@ test('resolveKubectlVersion() - selects the only available matching version', as
          path.join('pathToCachedTool', 'kubectl.exe')
       )
    })
-   
 })
