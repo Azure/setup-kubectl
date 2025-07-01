@@ -1,14 +1,4 @@
-jest.mock('@octokit/rest', () => {
-   const listTags = jest.fn()
-   return {
-      Octokit: jest.fn().mockImplementation(() => ({
-         repos: {listTags}
-      }))
-   }
-})
-
 import * as run from './run'
-import {octo} from './run'
 import {
    getkubectlDownloadURL,
    getKubectlArch,
@@ -22,10 +12,6 @@ import * as core from '@actions/core'
 import * as util from 'util'
 
 describe('Testing all functions in run file.', () => {
-   beforeEach(() => {
-      jest.resetAllMocks()
-   })
-
    test('getExecutableExtension() - return .exe when os is Windows', () => {
       jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
       expect(getExecutableExtension()).toBe('.exe')
@@ -178,31 +164,66 @@ describe('Testing all functions in run file.', () => {
       )
       expect(toolCache.downloadTool).not.toHaveBeenCalled()
    })
-   test('resolveKubectlVersion() - major.minor expanded to latest patch', async () => {
-      // mock GitHub tags list
-      jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
-         data: [{name: 'v1.27.13'}, {name: 'v1.27.15'}, {name: 'v1.26.6'}]
-      } as any)
 
-      const tag = await run.resolveKubectlVersion('1.27', octo)
-      expect(tag).toBe('v1.27.15')
+   test('getLatestPatchVersion() - download and return latest patch version', async () => {
+      jest
+         .spyOn(toolCache, 'downloadTool')
+         .mockReturnValue(Promise.resolve('pathToTool'))
+      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
+
+      const result = await run.getLatestPatchVersion('1', '27')
+
+      expect(result).toBe('v1.27.15')
+      expect(toolCache.downloadTool).toHaveBeenCalledWith(
+         'https://cdn.dl.k8s.io/release/stable-1.27.txt'
+      )
+      expect(fs.readFileSync).toHaveBeenCalledWith('pathToTool', 'utf8')
    })
-   test('resolveKubectlVersion() - returns matching full version unchanged', async () => {
-      // When a full version (already with patch) is provided, assume it is returned as is.
-      // Even if the GitHub tag list contains the same version.
-      jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
-         data: [{name: 'v1.27.15'}, {name: 'v1.27.13'}]
-      } as any)
-      const tag = await run.resolveKubectlVersion('v1.27.15', octo)
-      expect(tag).toBe('v1.27.15')
+   test('getLatestPatchVersion() - throw error when patch version is empty', async () => {
+      jest
+         .spyOn(toolCache, 'downloadTool')
+         .mockReturnValue(Promise.resolve('pathToTool'))
+      jest.spyOn(fs, 'readFileSync').mockReturnValue('')
+
+      await expect(run.getLatestPatchVersion('1', '27')).rejects.toThrow(
+         'Failed to get latest patch version for 1.27'
+      )
    })
-   test('resolveKubectlVersion() - selects the only available matching version', async () => {
-      // When only one tag matches the provided major.minor, that tag is returned.
-      jest.spyOn(octo.repos, 'listTags').mockResolvedValueOnce({
-         data: [{name: 'v1.28.0'}, {name: 'v1.27.99'}, {name: 'v1.26.5'}]
-      } as any)
-      const tag = await run.resolveKubectlVersion('1.27', octo)
-      expect(tag).toBe('v1.27.99')
+
+   test('getLatestPatchVersion() - throw error when download fails', async () => {
+      jest
+         .spyOn(toolCache, 'downloadTool')
+         .mockRejectedValue(new Error('Network error'))
+
+      await expect(run.getLatestPatchVersion('1', '27')).rejects.toThrow(
+         'Failed to get latest patch version for 1.27'
+      )
+   })
+   test('resolveKubectlVersion() - expands major.minor to latest patch', async () => {
+      // Mock the getLatestPatchVersion call
+      jest.spyOn(run, 'getLatestPatchVersion').mockResolvedValue('v1.27.15')
+
+      const result = await run.resolveKubectlVersion('1.27')
+
+      expect(result).toBe('v1.27.15')
+      expect(run.getLatestPatchVersion).toHaveBeenCalledWith('1', '27')
+   })
+   test('resolveKubectlVersion() - returns full version unchanged', async () => {
+      const result = await run.resolveKubectlVersion('v1.27.15')
+      expect(result).toBe('v1.27.15')
+   })
+
+   test('resolveKubectlVersion() - adds v prefix to full version', async () => {
+      const result = await run.resolveKubectlVersion('1.27.15')
+      expect(result).toBe('v1.27.15')
+   })
+   test('resolveKubectlVersion() - expands v-prefixed major.minor to latest patch', async () => {
+      jest.spyOn(run, 'getLatestPatchVersion').mockResolvedValue('v1.27.15')
+
+      const result = await run.resolveKubectlVersion('v1.27')
+
+      expect(result).toBe('v1.27.15')
+      expect(run.getLatestPatchVersion).toHaveBeenCalledWith('1', '27')
    })
    test('run() - download specified version and set output', async () => {
       jest.spyOn(core, 'getInput').mockReturnValue('v1.15.5')

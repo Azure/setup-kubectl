@@ -1,12 +1,10 @@
 import * as path from 'path'
 import * as util from 'util'
 import * as fs from 'fs'
-import {Octokit} from '@octokit/rest'
 import * as semver from 'semver'
 import * as toolCache from '@actions/tool-cache'
+import * as runModule from './run'
 import * as core from '@actions/core'
-
-export const octo = new Octokit()
 import {
    getkubectlDownloadURL,
    getKubectlArch,
@@ -23,7 +21,7 @@ export async function run() {
    if (version.toLocaleLowerCase() === 'latest') {
       version = await getStableKubectlVersion()
    } else {
-      version = await resolveKubectlVersion(version, octo)
+      version = await resolveKubectlVersion(version)
    }
    const cachedPath = await downloadKubectl(version)
 
@@ -93,10 +91,32 @@ export async function downloadKubectl(version: string): Promise<string> {
    fs.chmodSync(kubectlPath, '775')
    return kubectlPath
 }
-export async function resolveKubectlVersion(
-   version: string,
-   octo: Octokit
+
+export async function getLatestPatchVersion(
+   major: string,
+   minor: string
 ): Promise<string> {
+   const sourceURL = `https://cdn.dl.k8s.io/release/stable-${major}.${minor}.txt`
+   try {
+      const downloadPath = await toolCache.downloadTool(sourceURL)
+      const latestPatch = fs
+         .readFileSync(downloadPath, 'utf8')
+         .toString()
+         .trim()
+      if (!latestPatch) {
+         throw new Error(`No patch version found for ${major}.${minor}`)
+      }
+      return latestPatch
+   } catch (error) {
+      core.debug(error)
+      core.warning('GetLatestPatchVersionFailed')
+      throw new Error(
+         `Failed to get latest patch version for ${major}.${minor}`
+      )
+   }
+}
+
+export async function resolveKubectlVersion(version: string): Promise<string> {
    const cleanedVersion = version.trim()
 
    /*------ detect "major.minor" only ----------------*/
@@ -109,25 +129,6 @@ export async function resolveKubectlVersion(
    }
    const {major, minor} = mmMatch.groups
 
-   /* -------------------- fetch recent tags from GitHub ----------------- */
-   const resp = await octo.repos.listTags({
-      owner: 'kubernetes',
-      repo: 'kubernetes',
-      per_page: 100
-   })
-
-   /* -------------------- find newest patch within that line ------------ */
-   const wantedPrefix = `${major}.${minor}.`
-   const newest = resp.data
-      .map((tag) => tag.name.replace(/^v/, '')) // strip leading v
-      .filter((v) => v.startsWith(wantedPrefix)) // keep only 1.27.*
-      .sort(semver.rcompare)[0] // newest first
-
-   if (!newest) {
-      throw new Error(
-         `Could not find any ${wantedPrefix}* tag in kubernetes/kubernetes`
-      )
-   }
-
-   return `v${newest}` // always return with leading "v"
+   // Call the k8s CDN to get the latest patch version for the given major.minor
+   return await runModule.getLatestPatchVersion(major, minor)
 }
