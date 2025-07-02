@@ -1,6 +1,8 @@
 import * as os from 'os'
 import * as util from 'util'
-
+import * as fs from 'fs'
+import * as core from '@actions/core'
+import * as toolCache from '@actions/tool-cache'
 export function getKubectlArch(): string {
    const arch = os.arch()
    if (arch === 'x64') {
@@ -23,6 +25,29 @@ export function getkubectlDownloadURL(version: string, arch: string): string {
    }
 }
 
+export async function getLatestPatchVersion(
+   major: string,
+   minor: string
+): Promise<string> {
+   const sourceURL = `https://cdn.dl.k8s.io/release/stable-${major}.${minor}.txt`
+   try {
+      const downloadPath = await toolCache.downloadTool(sourceURL)
+      const latestPatch = fs
+         .readFileSync(downloadPath, 'utf8')
+         .toString()
+         .trim()
+      if (!latestPatch) {
+         throw new Error(`No patch version found for ${major}.${minor}`)
+      }
+      return latestPatch
+   } catch (error) {
+      core.debug(error)
+      core.warning('GetLatestPatchVersionFailed')
+      throw new Error(
+         `Failed to get latest patch version for ${major}.${minor}`
+      )
+   }
+}
 export function getExecutableExtension(): string {
    if (os.type().match(/^Win/)) {
       return '.exe'

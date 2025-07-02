@@ -1,14 +1,13 @@
 import * as path from 'path'
 import * as util from 'util'
 import * as fs from 'fs'
-import * as semver from 'semver'
 import * as toolCache from '@actions/tool-cache'
-import * as runModule from './run'
 import * as core from '@actions/core'
 import {
    getkubectlDownloadURL,
    getKubectlArch,
-   getExecutableExtension
+   getExecutableExtension,
+   getLatestPatchVersion
 } from './helpers'
 
 const kubectlToolName = 'kubectl'
@@ -92,43 +91,27 @@ export async function downloadKubectl(version: string): Promise<string> {
    return kubectlPath
 }
 
-export async function getLatestPatchVersion(
-   major: string,
-   minor: string
-): Promise<string> {
-   const sourceURL = `https://cdn.dl.k8s.io/release/stable-${major}.${minor}.txt`
-   try {
-      const downloadPath = await toolCache.downloadTool(sourceURL)
-      const latestPatch = fs
-         .readFileSync(downloadPath, 'utf8')
-         .toString()
-         .trim()
-      if (!latestPatch) {
-         throw new Error(`No patch version found for ${major}.${minor}`)
-      }
-      return latestPatch
-   } catch (error) {
-      core.debug(error)
-      core.warning('GetLatestPatchVersionFailed')
-      throw new Error(
-         `Failed to get latest patch version for ${major}.${minor}`
-      )
-   }
-}
-
 export async function resolveKubectlVersion(version: string): Promise<string> {
    const cleanedVersion = version.trim()
 
    /*------ detect "major.minor" only ----------------*/
    const mmMatch = cleanedVersion.match(/^v?(?<major>\d+)\.(?<minor>\d+)$/)
-   if (!mmMatch || !mmMatch.groups) {
-      // User already provided a full version such as 1.27.15 – do nothing.
-      return cleanedVersion.startsWith('v')
-         ? cleanedVersion
-         : `v${cleanedVersion}`
+   if (mmMatch?.groups) {
+      const {major, minor} = mmMatch.groups
+      // Call the k8s CDN to get the latest patch version for the given major.minor
+      return await getLatestPatchVersion(major, minor)
    }
-   const {major, minor} = mmMatch.groups
 
-   // Call the k8s CDN to get the latest patch version for the given major.minor
-   return await runModule.getLatestPatchVersion(major, minor)
+   /*------ detect "major.minor.patch" and validate ----------------*/
+   const mmpMatch = cleanedVersion.match(/^v?(\d+\.\d+\.\d+)$/)
+   if (!mmpMatch) {
+      throw new Error(
+         `Invalid version format: "${version}". Version must be in "major.minor" or "major.minor.patch" format (e.g., "1.27" or "v1.27.15").`
+      )
+   }
+
+   // User provided a full version such as 1.27.15, ensure it has a 'v' prefix.
+   return cleanedVersion.startsWith('v')
+      ? cleanedVersion
+      : `v${cleanedVersion}`
 }
