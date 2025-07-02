@@ -111,7 +111,5 @@ export async function resolveKubectlVersion(version: string): Promise<string> {
    }
 
    // User provided a full version such as 1.27.15, ensure it has a 'v' prefix.
-   return cleanedVersion.startsWith('v')
-      ? cleanedVersion
-      : `v${cleanedVersion}`
+   return cleanedVersion.startsWith('v') ? cleanedVersion : `v${cleanedVersion}`
 }

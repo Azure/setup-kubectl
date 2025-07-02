@@ -12,7 +12,6 @@ import * as path from 'path'
 import * as core from '@actions/core'
 import * as util from 'util'
 
-
 describe('Testing all functions in run file.', () => {
    beforeEach(() => {
       jest.clearAllMocks()
@@ -170,9 +169,7 @@ describe('Testing all functions in run file.', () => {
       expect(toolCache.downloadTool).not.toHaveBeenCalled()
    })
    test('getLatestPatchVersion() - download and return latest patch version', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockResolvedValue('pathToTool')
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
       jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
 
       const result = await getLatestPatchVersion('1', '27')
@@ -184,9 +181,7 @@ describe('Testing all functions in run file.', () => {
    })
 
    test('getLatestPatchVersion() - throw error when patch version is empty', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockResolvedValue('pathToTool')
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
       jest.spyOn(fs, 'readFileSync').mockReturnValue('')
 
       await expect(getLatestPatchVersion('1', '27')).rejects.toThrow(
@@ -204,9 +199,7 @@ describe('Testing all functions in run file.', () => {
       )
    })
    test('resolveKubectlVersion() - expands major.minor to latest patch', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockResolvedValue('pathToTool')
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
       jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
 
       const result = await run.resolveKubectlVersion('1.27')
@@ -222,9 +215,7 @@ describe('Testing all functions in run file.', () => {
       expect(result).toBe('v1.27.15')
    })
    test('resolveKubectlVersion() - expands v-prefixed major.minor to latest patch', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockResolvedValue('pathToTool')
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
       jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
 
       const result = await run.resolveKubectlVersion('v1.27')
