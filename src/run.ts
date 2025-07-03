@@ -1,14 +1,13 @@
 import * as path from 'path'
 import * as util from 'util'
 import * as fs from 'fs'
-
 import * as toolCache from '@actions/tool-cache'
 import * as core from '@actions/core'
-
 import {
    getkubectlDownloadURL,
    getKubectlArch,
-   getExecutableExtension
+   getExecutableExtension,
+   getLatestPatchVersion
 } from './helpers'
 
 const kubectlToolName = 'kubectl'
@@ -20,6 +19,8 @@ export async function run() {
    let version = core.getInput('version', {required: true})
    if (version.toLocaleLowerCase() === 'latest') {
       version = await getStableKubectlVersion()
+   } else {
+      version = await resolveKubectlVersion(version)
    }
    const cachedPath = await downloadKubectl(version)
 
@@ -88,4 +89,29 @@ export async function downloadKubectl(version: string): Promise<string> {
    )
    fs.chmodSync(kubectlPath, '775')
    return kubectlPath
+}
+
+export async function resolveKubectlVersion(version: string): Promise<string> {
+   const cleanedVersion = version.trim()
+   const versionMatch = cleanedVersion.match(
+      /^v?(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?$/
+   )
+
+   if (!versionMatch?.groups) {
+      throw new Error(
+         `Invalid version format: "${version}". Version must be in "major.minor" or "major.minor.patch" format (e.g., "1.27" or "v1.27.15").`
+      )
+   }
+
+   const {major, minor, patch} = versionMatch.groups
+
+   if (patch) {
+      // Full version was provided, just ensure it has a 'v' prefix
+      return cleanedVersion.startsWith('v')
+         ? cleanedVersion
+         : `v${cleanedVersion}`
+   }
+
+   // Patch version is missing, fetch the latest
+   return await getLatestPatchVersion(major, minor)
 }

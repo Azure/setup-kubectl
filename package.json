@@ -21,7 +21,8 @@
    "dependencies": {
       "@actions/core": "^1.11.1",
       "@actions/exec": "^1.0.0",
-      "@actions/tool-cache": "^2.0.2"
+      "@actions/tool-cache": "^2.0.2",
+      "ncc": "^0.3.6"
    },
    "devDependencies": {
       "@types/jest": "^30.0.0",
