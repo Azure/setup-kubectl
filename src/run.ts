@@ -93,23 +93,25 @@ export async function downloadKubectl(version: string): Promise<string> {
 
 export async function resolveKubectlVersion(version: string): Promise<string> {
    const cleanedVersion = version.trim()
+   const versionMatch = cleanedVersion.match(
+      /^v?(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?$/
+   )
 
-   /*------ detect "major.minor" only ----------------*/
-   const mmMatch = cleanedVersion.match(/^v?(?<major>\d+)\.(?<minor>\d+)$/)
-   if (mmMatch?.groups) {
-      const {major, minor} = mmMatch.groups
-      // Call the k8s CDN to get the latest patch version for the given major.minor
-      return await getLatestPatchVersion(major, minor)
-   }
-
-   /*------ detect "major.minor.patch" and validate ----------------*/
-   const mmpMatch = cleanedVersion.match(/^v?(\d+\.\d+\.\d+)$/)
-   if (!mmpMatch) {
+   if (!versionMatch?.groups) {
       throw new Error(
          `Invalid version format: "${version}". Version must be in "major.minor" or "major.minor.patch" format (e.g., "1.27" or "v1.27.15").`
       )
    }
 
-   // User provided a full version such as 1.27.15, ensure it has a 'v' prefix.
-   return cleanedVersion.startsWith('v') ? cleanedVersion : `v${cleanedVersion}`
+   const {major, minor, patch} = versionMatch.groups
+
+   if (patch) {
+      // Full version was provided, just ensure it has a 'v' prefix
+      return cleanedVersion.startsWith('v')
+         ? cleanedVersion
+         : `v${cleanedVersion}`
+   }
+
+   // Patch version is missing, fetch the latest
+   return await getLatestPatchVersion(major, minor)
 }
