@@ -29,7 +29,8 @@ export async function getLatestPatchVersion(
    major: string,
    minor: string
 ): Promise<string> {
-   const sourceURL = `https://cdn.dl.k8s.io/release/stable-${major}.${minor}.txt`
+   const version = `${major}.${minor}`
+   const sourceURL = `https://cdn.dl.k8s.io/release/stable-${version}.txt`
    try {
       const downloadPath = await toolCache.downloadTool(sourceURL)
       const latestPatch = fs
@@ -37,17 +38,16 @@ export async function getLatestPatchVersion(
          .toString()
          .trim()
       if (!latestPatch) {
-         throw new Error(`No patch version found for ${major}.${minor}`)
+         throw new Error(`No patch version found for ${version}`)
       }
       return latestPatch
    } catch (error) {
       core.debug(error)
       core.warning('GetLatestPatchVersionFailed')
-      throw new Error(
-         `Failed to get latest patch version for ${major}.${minor}`
-      )
+      throw new Error(`Failed to get latest patch version for ${version}`)
    }
 }
+
 export function getExecutableExtension(): string {
    if (os.type().match(/^Win/)) {
       return '.exe'
