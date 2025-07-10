@@ -1,0 +1,10 @@
+d6a2fb1 Improved readability and maintainability G
+425b200 revised parsing logic G
+7990a9d chore: fix code style issues with Prettier G
+bba84b6 Bump github/codeql-action in /.github/workflows in the actions group (#173) G
+e2483b9 feat: validate semantic version and refactor patch logic G
+77e32d9 refactor(resolveKubectlVersion): switch to k8s CDN for security patch retrieval G
+28c9317 chore: fix Prettier formatting G
+0c053a1 feat: Implement resolveKubectlVersion function with comprehensive test coverage G
+d2d46d8 4.0.1 fix v prefix (#167) E
+2ec0509 Bump github/codeql-action in /.github/workflows in the actions group (#164) E
