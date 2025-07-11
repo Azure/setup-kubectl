@@ -2,7 +2,8 @@ import * as run from './run'
 import {
    getkubectlDownloadURL,
    getKubectlArch,
-   getExecutableExtension
+   getExecutableExtension,
+   getLatestPatchVersion
 } from './helpers'
 import * as os from 'os'
 import * as toolCache from '@actions/tool-cache'
@@ -12,6 +13,9 @@ import * as core from '@actions/core'
 import * as util from 'util'
 
 describe('Testing all functions in run file.', () => {
+   beforeEach(() => {
+      jest.clearAllMocks()
+   })
    test('getExecutableExtension() - return .exe when os is Windows', () => {
       jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
       expect(getExecutableExtension()).toBe('.exe')
@@ -163,6 +167,59 @@ describe('Testing all functions in run file.', () => {
          '775'
       )
       expect(toolCache.downloadTool).not.toHaveBeenCalled()
+   })
+   test('getLatestPatchVersion() - download and return latest patch version', async () => {
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
+      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
+
+      const result = await getLatestPatchVersion('1', '27')
+
+      expect(result).toBe('v1.27.15')
+      expect(toolCache.downloadTool).toHaveBeenCalledWith(
+         'https://cdn.dl.k8s.io/release/stable-1.27.txt'
+      )
+   })
+
+   test('getLatestPatchVersion() - throw error when patch version is empty', async () => {
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
+      jest.spyOn(fs, 'readFileSync').mockReturnValue('')
+
+      await expect(getLatestPatchVersion('1', '27')).rejects.toThrow(
+         'Failed to get latest patch version for 1.27'
+      )
+   })
+
+   test('getLatestPatchVersion() - throw error when download fails', async () => {
+      jest
+         .spyOn(toolCache, 'downloadTool')
+         .mockRejectedValue(new Error('Network error'))
+
+      await expect(getLatestPatchVersion('1', '27')).rejects.toThrow(
+         'Failed to get latest patch version for 1.27'
+      )
+   })
+   test('resolveKubectlVersion() - expands major.minor to latest patch', async () => {
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
+      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
+
+      const result = await run.resolveKubectlVersion('1.27')
+      expect(result).toBe('v1.27.15')
+   })
+
+   test('resolveKubectlVersion() - returns full version unchanged', async () => {
+      const result = await run.resolveKubectlVersion('v1.27.15')
+      expect(result).toBe('v1.27.15')
+   })
+   test('resolveKubectlVersion() - adds v prefix to full version', async () => {
+      const result = await run.resolveKubectlVersion('1.27.15')
+      expect(result).toBe('v1.27.15')
+   })
+   test('resolveKubectlVersion() - expands v-prefixed major.minor to latest patch', async () => {
+      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
+      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
+
+      const result = await run.resolveKubectlVersion('v1.27')
+      expect(result).toBe('v1.27.15')
    })
    test('run() - download specified version and set output', async () => {
       jest.spyOn(core, 'getInput').mockReturnValue('v1.15.5')
