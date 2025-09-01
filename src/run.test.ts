@@ -251,7 +251,7 @@ describe('Testing all functions in run file.', () => {
       jest.spyOn(core, 'setOutput').mockImplementation()
       expect(await run.run()).toBeUndefined()
       expect(toolCache.downloadTool).toHaveBeenCalledWith(
-         'https://storage.googleapis.com/kubernetes-release/release/stable.txt'
+         'https://dl.k8s.io/release/stable.txt'
       )
       expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
       expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
