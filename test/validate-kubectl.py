@@ -10,7 +10,7 @@ def get_latest_version():
     time_to_sleep = 2
     for _ in range(10):
         response = requests.get(
-            'https://storage.googleapis.com/kubernetes-release/release/stable.txt')
+            'https://dl.k8s.io/release/stable.txt')
         if response.status_code == 200:
             break
         print('Failed to obtain latest version info, retrying.')
