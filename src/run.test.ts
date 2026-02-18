@@ -43,7 +43,7 @@ describe('Testing all functions in run file.', () => {
       (arch) => {
          jest.spyOn(os, 'type').mockReturnValue('Linux')
          const kubectlLinuxUrl = util.format(
-            'https://cdn.dl.k8s.io/release/v1.15.0/bin/linux/%s/kubectl',
+            'https://dl.k8s.io/release/v1.15.0/bin/linux/%s/kubectl',
             arch
          )
          expect(getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlLinuxUrl)
@@ -55,7 +55,7 @@ describe('Testing all functions in run file.', () => {
       (arch) => {
          jest.spyOn(os, 'type').mockReturnValue('Darwin')
          const kubectlDarwinUrl = util.format(
-            'https://cdn.dl.k8s.io/release/v1.15.0/bin/darwin/%s/kubectl',
+            'https://dl.k8s.io/release/v1.15.0/bin/darwin/%s/kubectl',
             arch
          )
          expect(getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlDarwinUrl)
@@ -67,7 +67,7 @@ describe('Testing all functions in run file.', () => {
       (arch) => {
          jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
          const kubectlWindowsUrl = util.format(
-            'https://cdn.dl.k8s.io/release/v1.15.0/bin/windows/%s/kubectl.exe',
+            'https://dl.k8s.io/release/v1.15.0/bin/windows/%s/kubectl.exe',
             arch
          )
          expect(getkubectlDownloadURL('v1.15.0', arch)).toBe(kubectlWindowsUrl)
@@ -176,7 +176,7 @@ describe('Testing all functions in run file.', () => {
 
       expect(result).toBe('v1.27.15')
       expect(toolCache.downloadTool).toHaveBeenCalledWith(
-         'https://cdn.dl.k8s.io/release/stable-1.27.txt'
+         'https://dl.k8s.io/release/stable-1.27.txt'
       )
    })
 
@@ -251,7 +251,7 @@ describe('Testing all functions in run file.', () => {
       jest.spyOn(core, 'setOutput').mockImplementation()
       expect(await run.run()).toBeUndefined()
       expect(toolCache.downloadTool).toHaveBeenCalledWith(
-         'https://cdn.dl.k8s.io/release/stable.txt'
+         'https://dl.k8s.io/release/stable.txt'
       )
       expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
       expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
