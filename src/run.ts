@@ -8,7 +8,7 @@ import {
    getKubectlArch,
    getExecutableExtension,
    getLatestPatchVersion
-} from './helpers'
+} from './helpers.js'
 
 const kubectlToolName = 'kubectl'
 const stableKubectlVersion = 'v1.15.0'

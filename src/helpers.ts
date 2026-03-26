@@ -42,7 +42,7 @@ export async function getLatestPatchVersion(
       }
       return latestPatch
    } catch (error) {
-      core.debug(error)
+      core.debug(String(error))
       core.warning('GetLatestPatchVersionFailed')
       throw new Error(`Failed to get latest patch version for ${version}`)
    }
