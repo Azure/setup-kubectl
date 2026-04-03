@@ -1,28 +1,43 @@
-import * as run from './run'
-import {
+import {vi, describe, test, expect, beforeEach} from 'vitest'
+import * as path from 'path'
+import * as util from 'util'
+
+vi.mock('os')
+vi.mock('fs')
+vi.mock('@actions/tool-cache', async (importOriginal) => {
+   const actual = await importOriginal<typeof import('@actions/tool-cache')>()
+   return {
+      ...actual,
+      downloadTool: vi.fn(),
+      find: vi.fn(),
+      cacheFile: vi.fn()
+   }
+})
+vi.mock('@actions/core')
+
+const os = await import('os')
+const fs = await import('fs')
+const toolCache = await import('@actions/tool-cache')
+const core = await import('@actions/core')
+const run = await import('./run.js')
+const {
    getkubectlDownloadURL,
    getKubectlArch,
    getExecutableExtension,
    getLatestPatchVersion
-} from './helpers'
-import * as os from 'os'
-import * as toolCache from '@actions/tool-cache'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as core from '@actions/core'
-import * as util from 'util'
+} = await import('./helpers.js')
 
 describe('Testing all functions in run file.', () => {
    beforeEach(() => {
-      jest.clearAllMocks()
+      vi.clearAllMocks()
    })
    test('getExecutableExtension() - return .exe when os is Windows', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
+      vi.mocked(os.type).mockReturnValue('Windows_NT')
       expect(getExecutableExtension()).toBe('.exe')
       expect(os.type).toHaveBeenCalled()
    })
    test('getExecutableExtension() - return empty string for non-windows OS', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Darwin')
+      vi.mocked(os.type).mockReturnValue('Darwin')
       expect(getExecutableExtension()).toBe('')
       expect(os.type).toHaveBeenCalled()
    })
@@ -33,7 +48,7 @@ describe('Testing all functions in run file.', () => {
    ])(
       'getKubectlArch() - return on %s os arch %s kubectl arch',
       (osArch, kubectlArch) => {
-         jest.spyOn(os, 'arch').mockReturnValue(osArch as NodeJS.Architecture)
+         vi.mocked(os.arch).mockReturnValue(osArch as NodeJS.Architecture)
          expect(getKubectlArch()).toBe(kubectlArch)
          expect(os.arch).toHaveBeenCalled()
       }
@@ -41,7 +56,7 @@ describe('Testing all functions in run file.', () => {
    test.each([['arm'], ['arm64'], ['amd64']])(
       'getkubectlDownloadURL() - return the URL to download %s kubectl for Linux',
       (arch) => {
-         jest.spyOn(os, 'type').mockReturnValue('Linux')
+         vi.mocked(os.type).mockReturnValue('Linux')
          const kubectlLinuxUrl = util.format(
             'https://dl.k8s.io/release/v1.15.0/bin/linux/%s/kubectl',
             arch
@@ -53,7 +68,7 @@ describe('Testing all functions in run file.', () => {
    test.each([['arm'], ['arm64'], ['amd64']])(
       'getkubectlDownloadURL() - return the URL to download %s kubectl for Darwin',
       (arch) => {
-         jest.spyOn(os, 'type').mockReturnValue('Darwin')
+         vi.mocked(os.type).mockReturnValue('Darwin')
          const kubectlDarwinUrl = util.format(
             'https://dl.k8s.io/release/v1.15.0/bin/darwin/%s/kubectl',
             arch
@@ -65,7 +80,7 @@ describe('Testing all functions in run file.', () => {
    test.each([['arm'], ['arm64'], ['amd64']])(
       'getkubectlDownloadURL() - return the URL to download %s kubectl for Windows',
       (arch) => {
-         jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
+         vi.mocked(os.type).mockReturnValue('Windows_NT')
          const kubectlWindowsUrl = util.format(
             'https://dl.k8s.io/release/v1.15.0/bin/windows/%s/kubectl.exe',
             arch
@@ -75,40 +90,30 @@ describe('Testing all functions in run file.', () => {
       }
    )
    test('getStableKubectlVersion() - download stable version file, read version and return it', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockReturnValue(Promise.resolve('pathToTool'))
-      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.20.4')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(fs.readFileSync).mockReturnValue('v1.20.4')
       expect(await run.getStableKubectlVersion()).toBe('v1.20.4')
       expect(toolCache.downloadTool).toHaveBeenCalled()
       expect(fs.readFileSync).toHaveBeenCalledWith('pathToTool', 'utf8')
    })
    test('getStableKubectlVersion() - return default v1.15.0 if version read is empty', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockReturnValue(Promise.resolve('pathToTool'))
-      jest.spyOn(fs, 'readFileSync').mockReturnValue('')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(fs.readFileSync).mockReturnValue('')
       expect(await run.getStableKubectlVersion()).toBe('v1.15.0')
       expect(toolCache.downloadTool).toHaveBeenCalled()
       expect(fs.readFileSync).toHaveBeenCalledWith('pathToTool', 'utf8')
    })
    test('getStableKubectlVersion() - return default v1.15.0 if unable to download file', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockRejectedValue('Unable to download.')
+      vi.mocked(toolCache.downloadTool).mockRejectedValue('Unable to download.')
       expect(await run.getStableKubectlVersion()).toBe('v1.15.0')
       expect(toolCache.downloadTool).toHaveBeenCalled()
    })
    test('downloadKubectl() - download kubectl, add it to toolCache and return path to it', async () => {
-      jest.spyOn(toolCache, 'find').mockReturnValue('')
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockReturnValue(Promise.resolve('pathToTool'))
-      jest
-         .spyOn(toolCache, 'cacheFile')
-         .mockReturnValue(Promise.resolve('pathToCachedTool'))
-      jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
-      jest.spyOn(fs, 'chmodSync').mockImplementation(() => {})
+      vi.mocked(toolCache.find).mockReturnValue('')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(toolCache.cacheFile).mockResolvedValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Windows_NT')
+      vi.mocked(fs.chmodSync).mockImplementation(() => {})
       expect(await run.downloadKubectl('v1.15.0')).toBe(
          path.join('pathToCachedTool', 'kubectl.exe')
       )
@@ -122,10 +127,10 @@ describe('Testing all functions in run file.', () => {
       )
    })
    test('downloadKubectl() - throw DownloadKubectlFailed error when unable to download kubectl', async () => {
-      jest.spyOn(toolCache, 'find').mockReturnValue('')
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockRejectedValue('Unable to download kubectl.')
+      vi.mocked(toolCache.find).mockReturnValue('')
+      vi.mocked(toolCache.downloadTool).mockRejectedValue(
+         'Unable to download kubectl.'
+      )
       await expect(run.downloadKubectl('v1.15.0')).rejects.toThrow(
          'DownloadKubectlFailed'
       )
@@ -135,9 +140,9 @@ describe('Testing all functions in run file.', () => {
    test('downloadKubectl() - throw kubectl not found error when receive 404 response', async () => {
       const kubectlVersion = 'v1.15.0'
       const arch = 'arm128'
-      jest.spyOn(os, 'arch').mockReturnValue(arch as any)
-      jest.spyOn(toolCache, 'find').mockReturnValue('')
-      jest.spyOn(toolCache, 'downloadTool').mockImplementation((_) => {
+      vi.mocked(os.arch).mockReturnValue(arch as NodeJS.Architecture)
+      vi.mocked(toolCache.find).mockReturnValue('')
+      vi.mocked(toolCache.downloadTool).mockImplementation((_) => {
          throw new toolCache.HTTPError(404)
       })
       await expect(run.downloadKubectl(kubectlVersion)).rejects.toThrow(
@@ -152,11 +157,10 @@ describe('Testing all functions in run file.', () => {
       expect(toolCache.downloadTool).toHaveBeenCalled()
    })
    test('downloadKubectl() - return path to existing cache of kubectl', async () => {
-      jest.spyOn(core, 'getInput').mockImplementation(() => 'v1.15.5')
-      jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool')
-      jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
-      jest.spyOn(fs, 'chmodSync').mockImplementation(() => {})
-      jest.spyOn(toolCache, 'downloadTool')
+      vi.mocked(core.getInput).mockImplementation(() => 'v1.15.5')
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Windows_NT')
+      vi.mocked(fs.chmodSync).mockImplementation(() => {})
       expect(await run.downloadKubectl('v1.15.0')).toBe(
          path.join('pathToCachedTool', 'kubectl.exe')
       )
@@ -169,8 +173,8 @@ describe('Testing all functions in run file.', () => {
       expect(toolCache.downloadTool).not.toHaveBeenCalled()
    })
    test('getLatestPatchVersion() - download and return latest patch version', async () => {
-      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
-      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(fs.readFileSync).mockReturnValue('v1.27.15')
 
       const result = await getLatestPatchVersion('1', '27')
 
@@ -181,8 +185,8 @@ describe('Testing all functions in run file.', () => {
    })
 
    test('getLatestPatchVersion() - throw error when patch version is empty', async () => {
-      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
-      jest.spyOn(fs, 'readFileSync').mockReturnValue('')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(fs.readFileSync).mockReturnValue('')
 
       await expect(getLatestPatchVersion('1', '27')).rejects.toThrow(
          'Failed to get latest patch version for 1.27'
@@ -190,17 +194,17 @@ describe('Testing all functions in run file.', () => {
    })
 
    test('getLatestPatchVersion() - throw error when download fails', async () => {
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockRejectedValue(new Error('Network error'))
+      vi.mocked(toolCache.downloadTool).mockRejectedValue(
+         new Error('Network error')
+      )
 
       await expect(getLatestPatchVersion('1', '27')).rejects.toThrow(
          'Failed to get latest patch version for 1.27'
       )
    })
    test('resolveKubectlVersion() - expands major.minor to latest patch', async () => {
-      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
-      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(fs.readFileSync).mockReturnValue('v1.27.15')
 
       const result = await run.resolveKubectlVersion('1.27')
       expect(result).toBe('v1.27.15')
@@ -215,20 +219,20 @@ describe('Testing all functions in run file.', () => {
       expect(result).toBe('v1.27.15')
    })
    test('resolveKubectlVersion() - expands v-prefixed major.minor to latest patch', async () => {
-      jest.spyOn(toolCache, 'downloadTool').mockResolvedValue('pathToTool')
-      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.27.15')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(fs.readFileSync).mockReturnValue('v1.27.15')
 
       const result = await run.resolveKubectlVersion('v1.27')
       expect(result).toBe('v1.27.15')
    })
    test('run() - download specified version and set output', async () => {
-      jest.spyOn(core, 'getInput').mockReturnValue('v1.15.5')
-      jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool')
-      jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
-      jest.spyOn(fs, 'chmodSync').mockImplementation()
-      jest.spyOn(core, 'addPath').mockImplementation()
-      jest.spyOn(console, 'log').mockImplementation()
-      jest.spyOn(core, 'setOutput').mockImplementation()
+      vi.mocked(core.getInput).mockReturnValue('v1.15.5')
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Windows_NT')
+      vi.mocked(fs.chmodSync).mockImplementation()
+      vi.mocked(core.addPath).mockImplementation()
+      vi.spyOn(console, 'log').mockImplementation()
+      vi.mocked(core.setOutput).mockImplementation()
       expect(await run.run()).toBeUndefined()
       expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
       expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
@@ -238,17 +242,15 @@ describe('Testing all functions in run file.', () => {
       )
    })
    test('run() - get latest version, download it and set output', async () => {
-      jest.spyOn(core, 'getInput').mockReturnValue('latest')
-      jest
-         .spyOn(toolCache, 'downloadTool')
-         .mockReturnValue(Promise.resolve('pathToTool'))
-      jest.spyOn(fs, 'readFileSync').mockReturnValue('v1.20.4')
-      jest.spyOn(toolCache, 'find').mockReturnValue('pathToCachedTool')
-      jest.spyOn(os, 'type').mockReturnValue('Windows_NT')
-      jest.spyOn(fs, 'chmodSync').mockImplementation()
-      jest.spyOn(core, 'addPath').mockImplementation()
-      jest.spyOn(console, 'log').mockImplementation()
-      jest.spyOn(core, 'setOutput').mockImplementation()
+      vi.mocked(core.getInput).mockReturnValue('latest')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(fs.readFileSync).mockReturnValue('v1.20.4')
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Windows_NT')
+      vi.mocked(fs.chmodSync).mockImplementation()
+      vi.mocked(core.addPath).mockImplementation()
+      vi.spyOn(console, 'log').mockImplementation()
+      vi.mocked(core.setOutput).mockImplementation()
       expect(await run.run()).toBeUndefined()
       expect(toolCache.downloadTool).toHaveBeenCalledWith(
          'https://dl.k8s.io/release/stable.txt'
