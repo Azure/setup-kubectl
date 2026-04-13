@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.1.0] - 2026-04-11
+
+### Changed
+
+- #243 [Migrate to ESM with esbuild and vitest](https://github.com/Azure/setup-kubectl/pull/243)
+   - Replaced `@vercel/ncc` with `esbuild` for ESM bundling
+   - Replaced `jest`/`ts-jest` with `vitest` for testing
+   - Upgraded `@actions/core` to `^3.0.0`, `@actions/exec` to `^3.0.0`, `@actions/tool-cache` to `^4.0.0`
+   - Updated `tsconfig.json` to `NodeNext` module resolution
+- Add `npm run build` step to CI unit-tests workflow
+
+### Security
+
+- #242 [Bump picomatch](https://github.com/Azure/setup-kubectl/pull/242)
+- #244 [Bump handlebars from 4.7.8 to 4.7.9](https://github.com/Azure/setup-kubectl/pull/244)
+- #247 [Bump vite from 8.0.3 to 8.0.5](https://github.com/Azure/setup-kubectl/pull/247)
+- #245 [Bump github/codeql-action in CI workflows](https://github.com/Azure/setup-kubectl/pull/245)
+
 ## [5.0.0] - 2026-03-25
 
 ### Changed
