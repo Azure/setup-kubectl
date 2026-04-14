@@ -1,9 +1,32 @@
 set +e
 npm test
-# Run format check
 npm run format-check || {
   echo ""
   echo "❌ Formatting check failed."
   echo "💡 Run 'npm run format' or 'prettier --write .' to fix formatting issues."
   exit 1
 }
+
+STAGED=$(git diff --cached --name-only)
+if echo "$STAGED" | grep -qE '^(package\.json|package-lock\.json|CHANGELOG\.md)$'; then
+  PKG_VERSION=$(node -p "require('./package.json').version")
+  LOCK_VERSION=$(node -p "require('./package-lock.json').version")
+  CHANGELOG_VERSION=$(sed -n 's/^## \[\([^]]*\)\].*/\1/p' CHANGELOG.md | head -1)
+
+  MISMATCH=""
+  if [ "$PKG_VERSION" != "$LOCK_VERSION" ]; then
+    MISMATCH="${MISMATCH}\n  package.json:      ${PKG_VERSION}\n  package-lock.json: ${LOCK_VERSION}"
+  fi
+  if [ "$PKG_VERSION" != "$CHANGELOG_VERSION" ]; then
+    MISMATCH="${MISMATCH}\n  package.json: ${PKG_VERSION}\n  CHANGELOG.md: ${CHANGELOG_VERSION}"
+  fi
+
+  if [ -n "$MISMATCH" ]; then
+    echo ""
+    echo "❌ Version mismatch detected:"
+    echo -e "$MISMATCH"
+    echo ""
+    echo "💡 Ensure package.json, package-lock.json, and CHANGELOG.md all have the same version."
+    exit 1
+  fi
+fi
