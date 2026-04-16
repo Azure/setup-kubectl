@@ -5,8 +5,10 @@
       "moduleResolution": "NodeNext",
       "rootDir": "./src",
       "outDir": "./lib",
+      "types": ["node"],
       "skipLibCheck": true,
       "noEmit": true
    },
+   "include": ["src"],
    "exclude": ["node_modules", "**/*.test.ts", "vitest.config.ts"]
 }
