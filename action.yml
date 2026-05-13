@@ -5,6 +5,10 @@ inputs:
       description: 'Version of kubectl'
       required: true
       default: 'latest'
+   downloadBaseURL:
+      description: 'Set the download base URL'
+      required: false
+      default: 'https://dl.k8s.io'
 outputs:
    kubectl-path:
       description: 'Path to the cached kubectl binary'

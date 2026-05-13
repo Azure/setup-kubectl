@@ -21,7 +21,8 @@ export async function run() {
    } else {
       version = await resolveKubectlVersion(version)
    }
-   const cachedPath = await downloadKubectl(version)
+   const downloadBaseURL = core.getInput('downloadBaseURL', {required: false})
+   const cachedPath = await downloadKubectl(version, downloadBaseURL)
 
    core.addPath(path.dirname(cachedPath))
 
@@ -48,14 +49,17 @@ export async function getStableKubectlVersion(): Promise<string> {
    )
 }
 
-export async function downloadKubectl(version: string): Promise<string> {
+export async function downloadKubectl(
+   version: string,
+   downloadBaseURL: string = 'https://dl.k8s.io'
+): Promise<string> {
    let cachedToolpath = toolCache.find(kubectlToolName, version)
    let kubectlDownloadPath = ''
    const arch = getKubectlArch()
    if (!cachedToolpath) {
       try {
          kubectlDownloadPath = await toolCache.downloadTool(
-            getkubectlDownloadURL(version, arch)
+            getkubectlDownloadURL(version, arch, downloadBaseURL)
          )
       } catch (exception) {
          if (
