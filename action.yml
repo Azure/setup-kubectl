@@ -3,8 +3,11 @@ description: 'Install a specific version of kubectl binary. Acceptable values ar
 inputs:
    version:
       description: 'Version of kubectl'
-      required: true
+      required: false
       default: 'latest'
+   version-file:
+      description: 'Path to a .tool-versions (asdf/mise) file to read the kubectl version from. Takes precedence over the version input.'
+      required: false
 outputs:
    kubectl-path:
       description: 'Path to the cached kubectl binary'
