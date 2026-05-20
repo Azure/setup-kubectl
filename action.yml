@@ -5,6 +5,14 @@ inputs:
       description: 'Version of kubectl'
       required: true
       default: 'latest'
+   downloadBaseURL:
+      description: 'Base URL to download kubectl from (https only). Use for private mirrors.'
+      required: false
+      default: 'https://dl.k8s.io'
+   checksum:
+      description: 'Expected SHA256 of the kubectl binary. Recommended when overriding downloadBaseURL.'
+      required: false
+      default: ''
 outputs:
    kubectl-path:
       description: 'Path to the cached kubectl binary'
