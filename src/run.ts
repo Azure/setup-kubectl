@@ -7,7 +7,8 @@ import {
    getkubectlDownloadURL,
    getKubectlArch,
    getExecutableExtension,
-   getLatestPatchVersion
+   getLatestPatchVersion,
+   parseToolVersionsFile
 } from './helpers.js'
 
 const kubectlToolName = 'kubectl'
@@ -15,11 +16,19 @@ const stableKubectlVersion = 'v1.15.0'
 const stableVersionUrl = 'https://dl.k8s.io/release/stable.txt'
 
 export async function run() {
-   let version = core.getInput('version', {required: true})
-   if (version.toLocaleLowerCase() === 'latest') {
-      version = await getStableKubectlVersion()
+   const versionFile = core.getInput('version-file')
+   let version: string
+
+   if (versionFile) {
+      const rawVersion = parseToolVersionsFile(versionFile)
+      version = await resolveKubectlVersion(rawVersion)
    } else {
-      version = await resolveKubectlVersion(version)
+      version = core.getInput('version', {required: true})
+      if (version.toLocaleLowerCase() === 'latest') {
+         version = await getStableKubectlVersion()
+      } else {
+         version = await resolveKubectlVersion(version)
+      }
    }
    const cachedPath = await downloadKubectl(version)
 

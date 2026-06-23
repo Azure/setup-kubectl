@@ -54,3 +54,18 @@ export function getExecutableExtension(): string {
    }
    return ''
 }
+
+export function parseToolVersionsFile(filePath: string): string {
+   const content = fs.readFileSync(filePath, 'utf8').toString()
+   for (const line of content.split('\n')) {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('#') || trimmed === '') continue
+      const [tool, version] = trimmed.split(/\s+/)
+      if (tool === 'kubectl' && version) {
+         return version
+      }
+   }
+   throw new Error(
+      `Could not find a kubectl entry in tool-versions file: ${filePath}`
+   )
+}
