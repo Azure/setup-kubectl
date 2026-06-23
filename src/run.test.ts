@@ -89,6 +89,34 @@ describe('Testing all functions in run file.', () => {
          expect(os.type).toHaveBeenCalled()
       }
    )
+   test.each([['arm'], ['arm64'], ['amd64']])(
+      'getkubectlDownloadURL() - return the URL to download %s kubectl for Linux with custom base URL',
+      (arch) => {
+         vi.mocked(os.type).mockReturnValue('Linux')
+         const customBase = 'https://my-mirror.example.com'
+         const expected = util.format(
+            `${customBase}/release/v1.15.0/bin/linux/%s/kubectl`,
+            arch
+         )
+         expect(getkubectlDownloadURL('v1.15.0', arch, customBase)).toBe(
+            expected
+         )
+      }
+   )
+   test.each([['arm'], ['arm64'], ['amd64']])(
+      'getkubectlDownloadURL() - strip trailing slash from custom base URL for %s on Darwin',
+      (arch) => {
+         vi.mocked(os.type).mockReturnValue('Darwin')
+         const customBase = 'https://my-mirror.example.com/'
+         const expected = util.format(
+            `https://my-mirror.example.com/release/v1.15.0/bin/darwin/%s/kubectl`,
+            arch
+         )
+         expect(getkubectlDownloadURL('v1.15.0', arch, customBase)).toBe(
+            expected
+         )
+      }
+   )
    test('getStableKubectlVersion() - download stable version file, read version and return it', async () => {
       vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
       vi.mocked(fs.readFileSync).mockReturnValue('v1.20.4')
@@ -118,12 +146,29 @@ describe('Testing all functions in run file.', () => {
          path.join('pathToCachedTool', 'kubectl.exe')
       )
       expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.15.0')
-      expect(toolCache.downloadTool).toHaveBeenCalled()
+      expect(toolCache.downloadTool).toHaveBeenCalledWith(
+         'https://dl.k8s.io/release/v1.15.0/bin/windows/amd64/kubectl.exe'
+      )
       expect(toolCache.cacheFile).toHaveBeenCalled()
       expect(os.type).toHaveBeenCalled()
       expect(fs.chmodSync).toHaveBeenCalledWith(
          path.join('pathToCachedTool', 'kubectl.exe'),
          '775'
+      )
+   })
+   test('downloadKubectl() - download kubectl using custom downloadBaseURL', async () => {
+      vi.mocked(toolCache.find).mockReturnValue('')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
+      vi.mocked(toolCache.cacheFile).mockResolvedValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Linux')
+      vi.mocked(os.arch).mockReturnValue('x64')
+      vi.mocked(fs.chmodSync).mockImplementation(() => {})
+      const customBase = 'https://my-mirror.example.com'
+      expect(await run.downloadKubectl('v1.15.0', customBase)).toBe(
+         path.join('pathToCachedTool', 'kubectl')
+      )
+      expect(toolCache.downloadTool).toHaveBeenCalledWith(
+         `${customBase}/release/v1.15.0/bin/linux/amd64/kubectl`
       )
    })
    test('downloadKubectl() - throw DownloadKubectlFailed error when unable to download kubectl', async () => {
@@ -235,6 +280,9 @@ describe('Testing all functions in run file.', () => {
       vi.mocked(core.setOutput).mockImplementation()
       expect(await run.run()).toBeUndefined()
       expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
+      expect(core.getInput).toHaveBeenCalledWith('downloadBaseURL', {
+         required: false
+      })
       expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
       expect(core.setOutput).toHaveBeenCalledWith(
          'kubectl-path',
@@ -256,6 +304,9 @@ describe('Testing all functions in run file.', () => {
          'https://dl.k8s.io/release/stable.txt'
       )
       expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
+      expect(core.getInput).toHaveBeenCalledWith('downloadBaseURL', {
+         required: false
+      })
       expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
       expect(core.setOutput).toHaveBeenCalledWith(
          'kubectl-path',
