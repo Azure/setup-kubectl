@@ -11,17 +11,22 @@ export function getKubectlArch(): string {
    return arch
 }
 
-export function getkubectlDownloadURL(version: string, arch: string): string {
+export function getkubectlDownloadURL(
+   version: string,
+   arch: string,
+   baseURL: string = 'https://dl.k8s.io'
+): string {
+   const base = baseURL.replace(/\/$/, '')
    switch (os.type()) {
       case 'Linux':
-         return `https://dl.k8s.io/release/${version}/bin/linux/${arch}/kubectl`
+         return `${base}/release/${version}/bin/linux/${arch}/kubectl`
 
       case 'Darwin':
-         return `https://dl.k8s.io/release/${version}/bin/darwin/${arch}/kubectl`
+         return `${base}/release/${version}/bin/darwin/${arch}/kubectl`
 
       case 'Windows_NT':
       default:
-         return `https://dl.k8s.io/release/${version}/bin/windows/${arch}/kubectl.exe`
+         return `${base}/release/${version}/bin/windows/${arch}/kubectl.exe`
    }
 }
 
