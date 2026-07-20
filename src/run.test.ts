@@ -24,7 +24,8 @@ const {
    getkubectlDownloadURL,
    getKubectlArch,
    getExecutableExtension,
-   getLatestPatchVersion
+   getLatestPatchVersion,
+   parseToolVersionsFile
 } = await import('./helpers.js')
 
 describe('Testing all functions in run file.', () => {
@@ -226,7 +227,10 @@ describe('Testing all functions in run file.', () => {
       expect(result).toBe('v1.27.15')
    })
    test('run() - download specified version and set output', async () => {
-      vi.mocked(core.getInput).mockReturnValue('v1.15.5')
+      vi.mocked(core.getInput).mockImplementation((name) => {
+         if (name === 'version-file') return ''
+         return 'v1.15.5'
+      })
       vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
       vi.mocked(os.type).mockReturnValue('Windows_NT')
       vi.mocked(fs.chmodSync).mockImplementation()
@@ -234,6 +238,7 @@ describe('Testing all functions in run file.', () => {
       vi.spyOn(console, 'log').mockImplementation()
       vi.mocked(core.setOutput).mockImplementation()
       expect(await run.run()).toBeUndefined()
+      expect(core.getInput).toHaveBeenCalledWith('version-file')
       expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
       expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
       expect(core.setOutput).toHaveBeenCalledWith(
@@ -242,7 +247,10 @@ describe('Testing all functions in run file.', () => {
       )
    })
    test('run() - get latest version, download it and set output', async () => {
-      vi.mocked(core.getInput).mockReturnValue('latest')
+      vi.mocked(core.getInput).mockImplementation((name) => {
+         if (name === 'version-file') return ''
+         return 'latest'
+      })
       vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToTool')
       vi.mocked(fs.readFileSync).mockReturnValue('v1.20.4')
       vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
@@ -255,11 +263,51 @@ describe('Testing all functions in run file.', () => {
       expect(toolCache.downloadTool).toHaveBeenCalledWith(
          'https://dl.k8s.io/release/stable.txt'
       )
+      expect(core.getInput).toHaveBeenCalledWith('version-file')
       expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
       expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
       expect(core.setOutput).toHaveBeenCalledWith(
          'kubectl-path',
          path.join('pathToCachedTool', 'kubectl.exe')
+      )
+   })
+   test('parseToolVersionsFile() - return kubectl version from .tool-versions file', () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(
+         'kubectl 1.27.15\nnode 20.0.0\n'
+      )
+      expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
+      expect(fs.readFileSync).toHaveBeenCalledWith('.tool-versions', 'utf8')
+   })
+   test('parseToolVersionsFile() - ignore comments and blank lines', () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(
+         '# comment\n\nkubectl 1.27.15\n'
+      )
+      expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
+   })
+   test('parseToolVersionsFile() - throw error when kubectl entry is not found', () => {
+      vi.mocked(fs.readFileSync).mockReturnValue('node 20.0.0\npython 3.11.0\n')
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         'Could not find a kubectl entry in tool-versions file: .tool-versions'
+      )
+   })
+   test('run() - use version-file to determine kubectl version', async () => {
+      vi.mocked(core.getInput).mockImplementation((name) => {
+         if (name === 'version-file') return '.tool-versions'
+         return ''
+      })
+      vi.mocked(fs.readFileSync).mockReturnValue('kubectl 1.27.15\n')
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Linux')
+      vi.mocked(fs.chmodSync).mockImplementation()
+      vi.mocked(core.addPath).mockImplementation()
+      vi.mocked(core.setOutput).mockImplementation()
+      expect(await run.run()).toBeUndefined()
+      expect(core.getInput).toHaveBeenCalledWith('version-file')
+      expect(fs.readFileSync).toHaveBeenCalledWith('.tool-versions', 'utf8')
+      expect(core.addPath).toHaveBeenCalledWith('pathToCachedTool')
+      expect(core.setOutput).toHaveBeenCalledWith(
+         'kubectl-path',
+         path.join('pathToCachedTool', 'kubectl')
       )
    })
 })
