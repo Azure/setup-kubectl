@@ -23,11 +23,11 @@
    "dependencies": {
       "@actions/core": "^3.0.1",
       "@actions/exec": "^3.0.0",
-      "@actions/http-client": "^4.0.0",
+      "@actions/http-client": "^4.0.1",
       "@actions/tool-cache": "^4.0.0"
    },
    "devDependencies": {
-      "@types/node": "^26.1.1",
+      "@types/node": "^26.1.2",
       "esbuild": "^0.28.1",
       "husky": "^9.1.7",
       "prettier": "3.9.6",
