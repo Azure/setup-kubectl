@@ -27,11 +27,11 @@
       "@actions/tool-cache": "^4.0.0"
    },
    "devDependencies": {
-      "@types/node": "^26.2.0",
+      "@types/node": "^26.4.1",
       "esbuild": "^0.28.2",
       "husky": "^9.1.7",
       "prettier": "3.9.6",
       "typescript": "7.0.2",
-      "vitest": "^4.1.11"
+      "vitest": "^5.0.0"
    }
 }
