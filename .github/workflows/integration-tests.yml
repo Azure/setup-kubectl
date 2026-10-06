@@ -17,7 +17,7 @@ jobs:
          KUBECONFIG: /home/runner/.kube/config
          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
       steps:
-         - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
            name: Checkout from PR branch
 
          - id: action-npm-build
@@ -31,7 +31,7 @@ jobs:
                 rm -rf node_modules 
               fi
 
-         - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+         - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
            name: Install Python
            with:
               python-version: '3.x'
@@ -54,3 +54,32 @@ jobs:
 
          - name: Validate kubectl setup old version
            run: python test/validate-kubectl.py 'v1.15.1'
+
+         - name: Fetch known SHA256 for v1.30.0 linux/amd64
+           id: sha
+           run: |
+              value=$(curl -fsSL https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl.sha256)
+              echo "value=$value" >> "$GITHUB_OUTPUT"
+
+         - name: Setup kubectl with valid checksum
+           uses: ./
+           with:
+              version: 'v1.30.0'
+              checksum: ${{ steps.sha.outputs.value }}
+
+         - name: Validate kubectl setup with checksum
+           run: python test/validate-kubectl.py 'v1.30.0'
+
+         - name: Setup kubectl with bad checksum (expect failure)
+           id: badsum
+           continue-on-error: true
+           uses: ./
+           with:
+              version: 'v1.29.0'
+              checksum: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'
+
+         - name: Assert bad-checksum step failed
+           if: steps.badsum.outcome != 'failure'
+           run: |
+              echo "Expected bad-checksum step to fail, but outcome was: ${{ steps.badsum.outcome }}"
+              exit 1
