@@ -6,7 +6,7 @@ inputs:
       required: false
       default: 'latest'
    version-file:
-      description: 'Path to a .tool-versions (asdf/mise) file to read the kubectl version from. An explicitly configured version takes precedence.'
+      description: 'Path to a .tool-versions (asdf/mise) file to read the kubectl version from. A specific version other than latest takes precedence.'
       required: false
    downloadBaseURL:
       description: 'Base URL to download kubectl from (https only). Use for private mirrors.'

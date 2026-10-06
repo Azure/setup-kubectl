@@ -1129,6 +1129,66 @@ describe('Testing all functions in run file.', () => {
       )
    })
 
+   test('run() - expands a major.minor version from version-file', async () => {
+      mockInputs({version: '', 'version-file': '.tool-versions'})
+      mockVersionFileContent('kubectl 1.27\n')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToStableTxt')
+      vi.mocked(fs.readFileSync).mockReturnValue('v1.27.15')
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Linux')
+      vi.mocked(fs.chmodSync).mockImplementation()
+
+      await expect(run.run()).resolves.toBeUndefined()
+
+      expect(toolCache.downloadTool).toHaveBeenCalledWith(
+         'https://dl.k8s.io/release/stable-1.27.txt'
+      )
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.27.15')
+   })
+
+   test('run() - supports latest from version-file', async () => {
+      mockInputs({version: '', 'version-file': '.tool-versions'})
+      mockVersionFileContent('kubectl latest\n')
+      vi.mocked(toolCache.downloadTool).mockResolvedValue('pathToStableTxt')
+      vi.mocked(fs.readFileSync).mockReturnValue('v1.31.0')
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Linux')
+      vi.mocked(fs.chmodSync).mockImplementation()
+
+      await expect(run.run()).resolves.toBeUndefined()
+
+      expect(toolCache.downloadTool).toHaveBeenCalledWith(
+         'https://dl.k8s.io/release/stable.txt'
+      )
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.31.0')
+   })
+
+   test('run() - preserves a v-prefixed version from version-file', async () => {
+      mockInputs({version: '', 'version-file': '.tool-versions'})
+      mockVersionFileContent('kubectl v1.27.15\n')
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Linux')
+      vi.mocked(fs.chmodSync).mockImplementation()
+
+      await expect(run.run()).resolves.toBeUndefined()
+
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.27.15')
+      expect(toolCache.downloadTool).not.toHaveBeenCalled()
+   })
+
+   test.each(['../etc', '1.27%2Ffoo', '1.27.0;cmd'])(
+      'run() - rejects malformed version-file value %s before download',
+      async (value) => {
+         mockInputs({version: '', 'version-file': '.tool-versions'})
+         mockVersionFileContent(`kubectl ${value}\n`)
+
+         await expect(run.run()).rejects.toThrow('Invalid version format')
+
+         expect(toolCache.find).not.toHaveBeenCalled()
+         expect(toolCache.downloadTool).not.toHaveBeenCalled()
+      }
+   )
+
    test('run() - explicit version takes precedence over version-file', async () => {
       mockInputs({
          version: '1.30.0',
