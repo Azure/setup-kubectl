@@ -57,6 +57,20 @@ function mockInputs(inputs: Record<string, string>) {
    )
 }
 
+function mockVersionFileContent(content: string) {
+   const source = Buffer.from(content)
+   let offset = 0
+   vi.mocked(fs.readSync).mockImplementation(
+      (_fd, buffer, bufferOffset, length) => {
+         const count = Math.min(length, source.length - offset)
+         if (count <= 0) return 0
+         source.copy(buffer as Buffer, bufferOffset, offset, offset + count)
+         offset += count
+         return count
+      }
+   )
+}
+
 function fakeHttpResponse(opts: {
    status: number
    body?: string
@@ -109,11 +123,19 @@ describe('Testing all functions in run file.', () => {
       vi.mocked(fs.openSync).mockReturnValue(3 as never)
       vi.mocked(fs.writeSync).mockReturnValue(0 as never)
       vi.mocked(fs.closeSync).mockImplementation(() => {})
+      vi.mocked(fs.fstatSync).mockReturnValue({
+         dev: 1n,
+         ino: 1n,
+         isFile: () => true
+      } as fs.BigIntStats)
+      vi.mocked(fs.readSync).mockReturnValue(0)
       vi.mocked(fs.lstatSync).mockReturnValue({
+         dev: 1n,
+         ino: 1n,
          isSymbolicLink: () => false,
          isFile: () => true,
-         size: 1024
-      } as fs.Stats)
+         size: 1024n
+      } as fs.BigIntStats)
    })
 
    test('getExecutableExtension() - return .exe when os is Windows', () => {
@@ -965,27 +987,33 @@ describe('Testing all functions in run file.', () => {
    })
 
    test('parseToolVersionsFile() - returns kubectl version', () => {
-      vi.mocked(fs.readFileSync).mockReturnValue(
-         'kubectl 1.27.15\nnode 20.0.0\n'
-      )
+      mockVersionFileContent('kubectl 1.27.15\nnode 20.0.0\n')
       expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
-      expect(fs.readFileSync).toHaveBeenCalledWith('.tool-versions', 'utf8')
+      expect(fs.openSync).toHaveBeenCalledWith(
+         '.tool-versions',
+         fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0)
+      )
+      expect(fs.lstatSync).toHaveBeenCalledWith('.tool-versions', {
+         bigint: true
+      })
+      expect(fs.fstatSync).toHaveBeenCalledWith(3, {bigint: true})
+      expect(fs.closeSync).toHaveBeenCalledWith(3)
    })
 
    test('parseToolVersionsFile() - ignores comments and blank lines', () => {
-      vi.mocked(fs.readFileSync).mockReturnValue(
-         '# comment\n\nkubectl 1.27.15\n'
-      )
+      mockVersionFileContent('# comment\n\nkubectl 1.27.15\n')
       expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
    })
 
    test('parseToolVersionsFile() - throws when kubectl entry is absent', () => {
       vi.mocked(fs.lstatSync).mockReturnValue({
+         dev: 1n,
+         ino: 1n,
          isSymbolicLink: () => false,
          isFile: () => true,
-         size: 34
-      } as fs.Stats)
-      vi.mocked(fs.readFileSync).mockReturnValue('node 20.0.0\npython 3.11.0\n')
+         size: 34n
+      } as fs.BigIntStats)
+      mockVersionFileContent('node 20.0.0\npython 3.11.0\n')
       expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
          'Could not find a kubectl entry in tool-versions file: .tool-versions'
       )
@@ -1030,19 +1058,70 @@ describe('Testing all functions in run file.', () => {
       expect(fs.readFileSync).not.toHaveBeenCalled()
    })
 
+   test('parseToolVersionsFile() - rejects a file replaced between check and open', () => {
+      vi.mocked(fs.lstatSync).mockReturnValue({
+         dev: 1n,
+         ino: 10n,
+         isSymbolicLink: () => false,
+         isFile: () => true,
+         size: 16n
+      } as fs.BigIntStats)
+      vi.mocked(fs.fstatSync).mockReturnValue({
+         dev: 1n,
+         ino: 11n,
+         isFile: () => true
+      } as fs.BigIntStats)
+
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         'changed while it was being opened'
+      )
+      expect(fs.readSync).not.toHaveBeenCalled()
+      expect(fs.closeSync).toHaveBeenCalledWith(3)
+   })
+
+   test('parseToolVersionsFile() - rejects growth beyond 64 KiB after opening', () => {
+      mockVersionFileContent('x'.repeat(64 * 1024 + 1))
+
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         'exceeds the 65536-byte size limit'
+      )
+      expect(fs.closeSync).toHaveBeenCalledWith(3)
+   })
+
+   test('parseToolVersionsFile() - accepts exactly 64 KiB', () => {
+      mockVersionFileContent(`kubectl 1.27.15\n${' '.repeat(64 * 1024 - 17)}`)
+
+      expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
+      expect(fs.closeSync).toHaveBeenCalledWith(3)
+   })
+
+   test('parseToolVersionsFile() - closes the descriptor when reading fails', () => {
+      vi.mocked(fs.readSync).mockImplementation(() => {
+         throw new Error('read failed')
+      })
+
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         'read failed'
+      )
+      expect(fs.closeSync).toHaveBeenCalledWith(3)
+   })
+
    test('run() - uses version-file to determine kubectl version', async () => {
       mockInputs({
          version: '',
          'version-file': '.tool-versions'
       })
-      vi.mocked(fs.readFileSync).mockReturnValue('kubectl 1.27.15\n')
+      mockVersionFileContent('kubectl 1.27.15\n')
       vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
       vi.mocked(os.type).mockReturnValue('Linux')
       vi.mocked(fs.chmodSync).mockImplementation()
 
       await expect(run.run()).resolves.toBeUndefined()
 
-      expect(fs.readFileSync).toHaveBeenCalledWith('.tool-versions', 'utf8')
+      expect(fs.openSync).toHaveBeenCalledWith(
+         '.tool-versions',
+         fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0)
+      )
       expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.27.15')
       expect(core.setOutput).toHaveBeenCalledWith(
          'kubectl-path',

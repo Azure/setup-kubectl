@@ -307,18 +307,57 @@ export function getExecutableExtension(): string {
 
 export function parseToolVersionsFile(filePath: string): string {
    const maxBytes = 64 * 1024
-   const stats = fs.lstatSync(filePath)
-   if (stats.isSymbolicLink() || !stats.isFile()) {
+   const pathStats = fs.lstatSync(filePath, {bigint: true})
+   if (pathStats.isSymbolicLink() || !pathStats.isFile()) {
       throw new Error(
          `The version-file '${filePath}' must be a regular file and not a symbolic link.`
       )
    }
-   if (stats.size > maxBytes) {
+   if (pathStats.size > BigInt(maxBytes)) {
       throw new Error(
          `The version-file '${filePath}' exceeds the ${maxBytes}-byte size limit.`
       )
    }
-   const content = fs.readFileSync(filePath, 'utf8').toString()
+
+   const noFollow = fs.constants.O_NOFOLLOW ?? 0
+   const fd = fs.openSync(filePath, fs.constants.O_RDONLY | noFollow)
+   let content: string
+   try {
+      const fileStats = fs.fstatSync(fd, {bigint: true})
+      if (!fileStats.isFile()) {
+         throw new Error(
+            `The version-file '${filePath}' must be a regular file and not a symbolic link.`
+         )
+      }
+      if (pathStats.dev !== fileStats.dev || pathStats.ino !== fileStats.ino) {
+         throw new Error(
+            `The version-file '${filePath}' changed while it was being opened.`
+         )
+      }
+
+      const buffer = Buffer.alloc(maxBytes + 1)
+      let bytesRead = 0
+      while (bytesRead < buffer.length) {
+         const count = fs.readSync(
+            fd,
+            buffer,
+            bytesRead,
+            buffer.length - bytesRead,
+            null
+         )
+         if (count === 0) break
+         bytesRead += count
+      }
+      if (bytesRead > maxBytes) {
+         throw new Error(
+            `The version-file '${filePath}' exceeds the ${maxBytes}-byte size limit.`
+         )
+      }
+      content = buffer.toString('utf8', 0, bytesRead)
+   } finally {
+      fs.closeSync(fd)
+   }
+
    for (const line of content.split('\n')) {
       const trimmed = line.trim()
       if (trimmed.startsWith('#') || trimmed === '') continue
