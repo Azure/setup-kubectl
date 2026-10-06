@@ -109,6 +109,11 @@ describe('Testing all functions in run file.', () => {
       vi.mocked(fs.openSync).mockReturnValue(3 as never)
       vi.mocked(fs.writeSync).mockReturnValue(0 as never)
       vi.mocked(fs.closeSync).mockImplementation(() => {})
+      vi.mocked(fs.lstatSync).mockReturnValue({
+         isSymbolicLink: () => false,
+         isFile: () => true,
+         size: 1024
+      } as fs.Stats)
    })
 
    test('getExecutableExtension() - return .exe when os is Windows', () => {
@@ -799,7 +804,7 @@ describe('Testing all functions in run file.', () => {
       vi.mocked(core.setOutput).mockImplementation()
 
       await expect(run.run()).resolves.toBeUndefined()
-      expect(core.getInput).toHaveBeenCalledWith('version', {required: true})
+      expect(core.getInput).toHaveBeenCalledWith('version')
       expect(core.getInput).toHaveBeenCalledWith('downloadBaseURL', {
          required: false
       })
@@ -975,10 +980,54 @@ describe('Testing all functions in run file.', () => {
    })
 
    test('parseToolVersionsFile() - throws when kubectl entry is absent', () => {
+      vi.mocked(fs.lstatSync).mockReturnValue({
+         isSymbolicLink: () => false,
+         isFile: () => true,
+         size: 34
+      } as fs.Stats)
       vi.mocked(fs.readFileSync).mockReturnValue('node 20.0.0\npython 3.11.0\n')
       expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
          'Could not find a kubectl entry in tool-versions file: .tool-versions'
       )
+   })
+
+   test('parseToolVersionsFile() - rejects symbolic links', () => {
+      vi.mocked(fs.lstatSync).mockReturnValue({
+         isSymbolicLink: () => true,
+         isFile: () => true,
+         size: 16
+      } as fs.Stats)
+
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         'must be a regular file and not a symbolic link'
+      )
+      expect(fs.readFileSync).not.toHaveBeenCalled()
+   })
+
+   test('parseToolVersionsFile() - rejects non-regular files', () => {
+      vi.mocked(fs.lstatSync).mockReturnValue({
+         isSymbolicLink: () => false,
+         isFile: () => false,
+         size: 0
+      } as fs.Stats)
+
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         'must be a regular file and not a symbolic link'
+      )
+      expect(fs.readFileSync).not.toHaveBeenCalled()
+   })
+
+   test('parseToolVersionsFile() - rejects files larger than 64 KiB', () => {
+      vi.mocked(fs.lstatSync).mockReturnValue({
+         isSymbolicLink: () => false,
+         isFile: () => true,
+         size: 64 * 1024 + 1
+      } as fs.Stats)
+
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         'exceeds the 65536-byte size limit'
+      )
+      expect(fs.readFileSync).not.toHaveBeenCalled()
    })
 
    test('run() - uses version-file to determine kubectl version', async () => {
@@ -999,5 +1048,23 @@ describe('Testing all functions in run file.', () => {
          'kubectl-path',
          path.join('pathToCachedTool', 'kubectl')
       )
+   })
+
+   test('run() - explicit version takes precedence over version-file', async () => {
+      mockInputs({
+         version: '1.30.0',
+         'version-file': '.tool-versions'
+      })
+      vi.mocked(toolCache.find).mockReturnValue('pathToCachedTool')
+      vi.mocked(os.type).mockReturnValue('Linux')
+      vi.mocked(fs.chmodSync).mockImplementation()
+
+      await expect(run.run()).resolves.toBeUndefined()
+
+      expect(core.warning).toHaveBeenCalledWith(
+         "Both 'version' and 'version-file' inputs are specified; using 'version'."
+      )
+      expect(fs.readFileSync).not.toHaveBeenCalled()
+      expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.30.0')
    })
 })

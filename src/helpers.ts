@@ -306,6 +306,18 @@ export function getExecutableExtension(): string {
 }
 
 export function parseToolVersionsFile(filePath: string): string {
+   const maxBytes = 64 * 1024
+   const stats = fs.lstatSync(filePath)
+   if (stats.isSymbolicLink() || !stats.isFile()) {
+      throw new Error(
+         `The version-file '${filePath}' must be a regular file and not a symbolic link.`
+      )
+   }
+   if (stats.size > maxBytes) {
+      throw new Error(
+         `The version-file '${filePath}' exceeds the ${maxBytes}-byte size limit.`
+      )
+   }
    const content = fs.readFileSync(filePath, 'utf8').toString()
    for (const line of content.split('\n')) {
       const trimmed = line.trim()

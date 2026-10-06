@@ -22,10 +22,19 @@ const stableKubectlVersion = 'v1.15.0'
 
 export async function run() {
    const versionFile = core.getInput('version-file')
-   let version = core.getInput('version', {required: !versionFile})
+   let version = core.getInput('version')
 
    if (versionFile) {
-      version = parseToolVersionsFile(versionFile)
+      if (version && version.trim().toLowerCase() !== 'latest') {
+         core.warning(
+            "Both 'version' and 'version-file' inputs are specified; using 'version'."
+         )
+      } else {
+         version = parseToolVersionsFile(versionFile)
+      }
+   }
+   if (!version) {
+      version = 'latest'
    }
 
    const rawBaseURL = core.getInput('downloadBaseURL', {required: false}).trim()
