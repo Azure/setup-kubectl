@@ -1,5 +1,52 @@
 # Changelog
 
+## [5.2.0] - 2026-10-05
+
+### Added
+
+- #268 [Add custom download URL, checksum verification, and download authentication inputs](https://github.com/Azure/setup-kubectl/pull/268)
+
+### Fixed
+
+- #251 [Add Node.js types for TypeScript 6 compatibility](https://github.com/Azure/setup-kubectl/pull/251)
+
+### Changed
+
+- #267 [Pin the release workflow to a commit SHA](https://github.com/Azure/setup-kubectl/pull/267)
+- #252 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/252)
+- #253 [Update CI action dependencies](https://github.com/Azure/setup-kubectl/pull/253)
+- #254 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/254)
+- #255 [Update CodeQL action](https://github.com/Azure/setup-kubectl/pull/255)
+- #257 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/257)
+- #258 [Update CodeQL action](https://github.com/Azure/setup-kubectl/pull/258)
+- #262 [Update Node.js type definitions](https://github.com/Azure/setup-kubectl/pull/262)
+- #263 [Update CodeQL action](https://github.com/Azure/setup-kubectl/pull/263)
+- #265 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/265)
+- #266 [Update CI action dependencies](https://github.com/Azure/setup-kubectl/pull/266)
+- #269 [Update Vitest](https://github.com/Azure/setup-kubectl/pull/269)
+- #270 [Update Node.js type definitions](https://github.com/Azure/setup-kubectl/pull/270)
+- #271 [Update CI action dependencies](https://github.com/Azure/setup-kubectl/pull/271)
+- #272 [Update esbuild](https://github.com/Azure/setup-kubectl/pull/272)
+- #273 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/273)
+- #274 [Update Node.js type definitions](https://github.com/Azure/setup-kubectl/pull/274)
+- #275 [Update checkout action](https://github.com/Azure/setup-kubectl/pull/275)
+- #281 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/281)
+- #282 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/282)
+- #284 [Update Prettier](https://github.com/Azure/setup-kubectl/pull/284)
+- #285 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/285)
+- #287 [Update CI action dependencies](https://github.com/Azure/setup-kubectl/pull/287)
+- #293 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/293)
+- #294 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/294)
+- #295 [Update CI action dependencies](https://github.com/Azure/setup-kubectl/pull/295)
+- #299 [Update action dependencies](https://github.com/Azure/setup-kubectl/pull/299)
+
+### Security
+
+- #256 [Update postcss](https://github.com/Azure/setup-kubectl/pull/256)
+- #276 [Update undici](https://github.com/Azure/setup-kubectl/pull/276)
+- #289 [Update undici](https://github.com/Azure/setup-kubectl/pull/289)
+- #290 [Update postcss](https://github.com/Azure/setup-kubectl/pull/290)
+
 ## [5.1.0] - 2026-04-11
 
 ### Changed
