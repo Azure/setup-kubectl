@@ -12,6 +12,7 @@ import {
    getLatestPatchVersion,
    isDefaultBaseURL,
    normalizeBaseURL,
+   parseToolVersionsFile,
    secureDownload,
    validateBaseURL
 } from './helpers.js'
@@ -20,7 +21,21 @@ const kubectlToolName = 'kubectl'
 const stableKubectlVersion = 'v1.15.0'
 
 export async function run() {
-   let version = core.getInput('version', {required: true})
+   const versionFile = core.getInput('version-file')
+   let version = core.getInput('version')
+
+   if (versionFile) {
+      if (version && version.trim().toLowerCase() !== 'latest') {
+         core.warning(
+            "Both 'version' and 'version-file' inputs are specified; using 'version'."
+         )
+      } else {
+         version = parseToolVersionsFile(versionFile)
+      }
+   }
+   if (!version) {
+      version = 'latest'
+   }
 
    const rawBaseURL = core.getInput('downloadBaseURL', {required: false}).trim()
    const downloadBaseURL = rawBaseURL || DEFAULT_KUBECTL_BASE_URL

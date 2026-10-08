@@ -11,6 +11,27 @@ Acceptable values are latest or any semantic version string like `v1.15.0`. Use 
   id: install
 ```
 
+Alternatively, read the kubectl version from an
+[asdf/mise `.tool-versions` file](https://asdf-vm.com/manage/configuration.html):
+
+```yaml
+- uses: azure/setup-kubectl@v5
+  with:
+     version-file: '.tool-versions'
+  id: install
+```
+
+The kubectl entry may use `major.minor`, `major.minor.patch`, an optional `v`
+prefix, or `latest`:
+
+```text
+kubectl 1.31.2
+```
+
+When both inputs are set, a specific `version` other than `latest` takes
+precedence and the action emits a warning. The default `version: latest` allows
+`version-file` to select the version.
+
 Refer to the action metadata file for details about all the inputs https://github.com/Azure/setup-kubectl/blob/main/action.yml
 
 # Contributing
