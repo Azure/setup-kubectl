@@ -991,7 +991,9 @@ describe('Testing all functions in run file.', () => {
       expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
       expect(fs.openSync).toHaveBeenCalledWith(
          '.tool-versions',
-         fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0)
+         fs.constants.O_RDONLY |
+            (fs.constants.O_NOFOLLOW ?? 0) |
+            (fs.constants.O_NONBLOCK ?? 0)
       )
       expect(fs.lstatSync).toHaveBeenCalledWith('.tool-versions', {
          bigint: true
@@ -1120,7 +1122,9 @@ describe('Testing all functions in run file.', () => {
 
       expect(fs.openSync).toHaveBeenCalledWith(
          '.tool-versions',
-         fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0)
+         fs.constants.O_RDONLY |
+            (fs.constants.O_NOFOLLOW ?? 0) |
+            (fs.constants.O_NONBLOCK ?? 0)
       )
       expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.27.15')
       expect(core.setOutput).toHaveBeenCalledWith(

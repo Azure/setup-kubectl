@@ -320,7 +320,10 @@ export function parseToolVersionsFile(filePath: string): string {
    }
 
    const noFollow = fs.constants.O_NOFOLLOW ?? 0
-   const fd = fs.openSync(filePath, fs.constants.O_RDONLY | noFollow)
+   // A FIFO swapped in after lstat must not block open before fstat can reject it.
+   // O_NONBLOCK has no effect on regular files; these flags are POSIX-only.
+   const nonBlock = fs.constants.O_NONBLOCK ?? 0
+   const fd = fs.openSync(filePath, fs.constants.O_RDONLY | noFollow | nonBlock)
    let content: string
    try {
       const fileStats = fs.fstatSync(fd, {bigint: true})
