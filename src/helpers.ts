@@ -304,3 +304,72 @@ export function getExecutableExtension(): string {
    }
    return ''
 }
+
+export function parseToolVersionsFile(filePath: string): string {
+   const maxBytes = 64 * 1024
+   const pathStats = fs.lstatSync(filePath, {bigint: true})
+   if (pathStats.isSymbolicLink() || !pathStats.isFile()) {
+      throw new Error(
+         `The version-file '${filePath}' must be a regular file and not a symbolic link.`
+      )
+   }
+   if (pathStats.size > BigInt(maxBytes)) {
+      throw new Error(
+         `The version-file '${filePath}' exceeds the ${maxBytes}-byte size limit.`
+      )
+   }
+
+   const noFollow = fs.constants.O_NOFOLLOW ?? 0
+   // A FIFO swapped in after lstat must not block open before fstat can reject it.
+   // O_NONBLOCK has no effect on regular files; these flags are POSIX-only.
+   const nonBlock = fs.constants.O_NONBLOCK ?? 0
+   const fd = fs.openSync(filePath, fs.constants.O_RDONLY | noFollow | nonBlock)
+   let content: string
+   try {
+      const fileStats = fs.fstatSync(fd, {bigint: true})
+      if (!fileStats.isFile()) {
+         throw new Error(
+            `The version-file '${filePath}' must be a regular file and not a symbolic link.`
+         )
+      }
+      if (pathStats.dev !== fileStats.dev || pathStats.ino !== fileStats.ino) {
+         throw new Error(
+            `The version-file '${filePath}' changed while it was being opened.`
+         )
+      }
+
+      const buffer = Buffer.alloc(maxBytes + 1)
+      let bytesRead = 0
+      while (bytesRead < buffer.length) {
+         const count = fs.readSync(
+            fd,
+            buffer,
+            bytesRead,
+            buffer.length - bytesRead,
+            null
+         )
+         if (count === 0) break
+         bytesRead += count
+      }
+      if (bytesRead > maxBytes) {
+         throw new Error(
+            `The version-file '${filePath}' exceeds the ${maxBytes}-byte size limit.`
+         )
+      }
+      content = buffer.toString('utf8', 0, bytesRead)
+   } finally {
+      fs.closeSync(fd)
+   }
+
+   for (const line of content.split('\n')) {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('#') || trimmed === '') continue
+      const [tool, version] = trimmed.split(/\s+/)
+      if (tool === 'kubectl' && version) {
+         return version
+      }
+   }
+   throw new Error(
+      `Could not find a kubectl entry in tool-versions file: ${filePath}`
+   )
+}
