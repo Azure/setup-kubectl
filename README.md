@@ -28,6 +28,9 @@ prefix, or `latest`:
 kubectl 1.31.2
 ```
 
+If the file contains several `kubectl` entries, the first one is used. The file
+must be a regular file (not a symbolic link) of at most 64 KiB.
+
 When both inputs are set, a specific `version` other than `latest` takes
 precedence and the action emits a warning. The default `version: latest` allows
 `version-file` to select the version.

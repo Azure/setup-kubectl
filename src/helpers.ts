@@ -307,7 +307,15 @@ export function getExecutableExtension(): string {
 
 export function parseToolVersionsFile(filePath: string): string {
    const maxBytes = 64 * 1024
-   const pathStats = fs.lstatSync(filePath, {bigint: true})
+   let pathStats: fs.BigIntStats
+   try {
+      pathStats = fs.lstatSync(filePath, {bigint: true})
+   } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+         throw new Error(`The version-file '${filePath}' was not found.`)
+      }
+      throw error
+   }
    if (pathStats.isSymbolicLink() || !pathStats.isFile()) {
       throw new Error(
          `The version-file '${filePath}' must be a regular file and not a symbolic link.`

@@ -1007,6 +1007,23 @@ describe('Testing all functions in run file.', () => {
       expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
    })
 
+   test('parseToolVersionsFile() - uses the first kubectl entry', () => {
+      mockVersionFileContent('kubectl 1.27.15\nkubectl 1.30.0\n')
+      expect(parseToolVersionsFile('.tool-versions')).toBe('1.27.15')
+   })
+
+   test('parseToolVersionsFile() - reports a missing file clearly', () => {
+      vi.mocked(fs.lstatSync).mockImplementation(() => {
+         throw Object.assign(new Error('ENOENT: no such file or directory'), {
+            code: 'ENOENT'
+         })
+      })
+      expect(() => parseToolVersionsFile('.tool-versions')).toThrow(
+         "The version-file '.tool-versions' was not found."
+      )
+      expect(fs.openSync).not.toHaveBeenCalled()
+   })
+
    test('parseToolVersionsFile() - throws when kubectl entry is absent', () => {
       vi.mocked(fs.lstatSync).mockReturnValue({
          dev: 1n,
@@ -1207,7 +1224,8 @@ describe('Testing all functions in run file.', () => {
       expect(core.warning).toHaveBeenCalledWith(
          "Both 'version' and 'version-file' inputs are specified; using 'version'."
       )
-      expect(fs.readFileSync).not.toHaveBeenCalled()
+      expect(fs.lstatSync).not.toHaveBeenCalled()
+      expect(fs.readSync).not.toHaveBeenCalled()
       expect(toolCache.find).toHaveBeenCalledWith('kubectl', 'v1.30.0')
    })
 })
