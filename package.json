@@ -32,6 +32,6 @@
       "husky": "^9.1.7",
       "prettier": "3.9.10",
       "typescript": "7.0.2",
-      "vitest": "^5.0.5"
+      "vitest": "^5.1.0"
    }
 }
