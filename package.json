@@ -30,8 +30,8 @@
       "@types/node": "^26.6.6",
       "esbuild": "^0.28.2",
       "husky": "^9.1.7",
-      "prettier": "3.9.10",
+      "prettier": "3.10.1",
       "typescript": "7.0.2",
-      "vitest": "^5.1.0"
+      "vitest": "^5.1.1"
    }
 }
